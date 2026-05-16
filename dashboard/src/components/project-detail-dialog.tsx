@@ -321,7 +321,7 @@ export function ProjectDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl max-h-[95vh] overflow-hidden p-0 gap-0">
+      <DialogContent className="w-[96vw] max-w-[1600px] h-[92vh] overflow-hidden p-0 gap-0 rounded-2xl" showCloseButton={false}>
         {/* ── Header ── */}
         <div className="border-b border-border px-6 py-4 space-y-3">
           <div className="flex items-center justify-between gap-4">
@@ -364,8 +364,9 @@ export function ProjectDetailDialog({
                   <SelectItem value="devops">DevOps</SelectItem>
                   <SelectItem value="general">Général</SelectItem>
                 </SelectContent>
-              </Select>
-            </div>
+          </Select>
+          <button onClick={() => onOpenChange(false)} className="ml-2 w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors text-lg" title="Fermer">✕</button>
+          </div>
           </div>
 
           {/* Description + meta row */}
@@ -410,7 +411,7 @@ export function ProjectDetailDialog({
         </div>
 
         {/* ── Content area ── */}
-        <div className="overflow-y-auto px-6 py-5" style={{ maxHeight: "calc(95vh - 160px)" }}>
+        <div className="overflow-y-auto px-6 py-5 flex-1" style={{ maxHeight: "calc(92vh - 160px)" }}>
 
           {/* ── Overview tab ── */}
           {activeTab === "overview" && (
