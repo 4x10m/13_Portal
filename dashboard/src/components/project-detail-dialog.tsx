@@ -777,22 +777,30 @@ export function ProjectDetailDialog({
                 ) : undefined}
               </ResourceSection>
 
-              {/* OpenCode sessions */}
-              <ResourceSection
-                icon="⚡"
-                title="Sessions OpenCode"
-                count={project.opencode_sessions?.length || 0}
-              >
-                {project.opencode_sessions?.length ? (
-                  <div className="flex flex-wrap gap-1.5">
-                    {project.opencode_sessions.map((s, i) => (
-                      <Badge key={i} variant="outline" className="text-[11px] font-mono bg-purple-500/5 border-purple-500/20">
-                        ⚡ {s.slice(0, 8)}
-                      </Badge>
-                    ))}
-                  </div>
-                ) : undefined}
-              </ResourceSection>
+{/* OpenCode sessions */}
+<ResourceSection
+  icon="⚡"
+  title="Sessions OpenCode"
+  count={project.opencode_sessions?.length || 0}
+>
+  {project.opencode_sessions?.length ? (
+    <div className="space-y-1.5">
+      {project.opencode_sessions.map((s) => (
+        <div key={s.id} className="flex items-center gap-2 p-2 rounded-lg bg-[#1a2744] border border-[#2d3f5e]/50 hover:border-[#00d9ff]/30 transition-colors">
+          <span className={`w-2 h-2 rounded-full shrink-0 ${s.is_active ? "bg-[#00ff88]" : "bg-[#8899b3]"}`} />
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-medium truncate text-[#e0e8f0]">{s.title}</p>
+            <p className="text-[10px] text-[#8899b3] truncate">{s.cwd}</p>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <Badge variant="outline" className="text-[9px] border-[#2d3f5e] text-[#8899b3]">{s.model?.split("/").pop() || s.flavor}</Badge>
+            <span className="text-[10px] text-[#8899b3]">{s.message_count} msg</span>
+          </div>
+        </div>
+      ))}
+    </div>
+  ) : undefined}
+</ResourceSection>
 
               {resourceCount === 0 && (
                 <div className="text-center py-8 space-y-3">

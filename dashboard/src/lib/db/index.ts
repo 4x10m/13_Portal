@@ -1,7 +1,7 @@
 import Database from "better-sqlite3";
 import path from "path";
 import fs from "fs";
-import type { ProjectDB, Project, ProjectStatus, ProjectPriority, ProjectCategory } from "./types";
+import type { ProjectDB, Project, ProjectStatus, ProjectPriority, ProjectCategory, OpenCodeSession } from "./types";
 
 const DB_PATH = process.env.DATABASE_PATH || "./data/dashboard.db";
 
@@ -19,11 +19,19 @@ export function parseProject(row: ProjectDB): Project {
   let docker_containers: string[] = [];
   let domains: string[] = [];
   let databases: { type: string; name: string }[] = [];
-  let opencode_sessions: string[] = [];
+  let opencode_sessions: OpenCodeSession[] = [];
   try { docker_containers = JSON.parse(row.docker_containers || "[]"); } catch { /* */ }
   try { domains = JSON.parse(row.domains || "[]"); } catch { /* */ }
   try { databases = JSON.parse(row.databases || "[]"); } catch { /* */ }
-  try { opencode_sessions = JSON.parse(row.opencode_sessions || "[]"); } catch { /* */ }
+  try {
+    const raw = JSON.parse(row.opencode_sessions || "[]");
+    // Handle both old format (string[]) and new format (OpenCodeSession[])
+    if (raw.length > 0 && typeof raw[0] === "string") {
+      opencode_sessions = [];
+    } else {
+      opencode_sessions = raw;
+    }
+  } catch { /* */ }
   return { ...row, docker_containers, domains, databases, opencode_sessions };
 }
 

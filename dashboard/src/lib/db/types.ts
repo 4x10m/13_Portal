@@ -6,6 +6,21 @@ export type ProjectCategory = "infra" | "ai" | "apps" | "perso" | "devops" | "ge
 export type MilestoneStatus = "pending" | "in-progress" | "done";
 export type TaskStatus = "todo" | "in-progress" | "done" | "blocked";
 
+export interface OpenCodeSession {
+  id: string;
+  title: string;
+  slug: string;
+  cwd: string;
+  flavor: string;
+  model: string;
+  message_count: number;
+  is_active: boolean;
+  is_recent: boolean;
+  is_pinned: boolean;
+  time_created: number;
+  time_updated: number;
+}
+
 export interface ProjectDB {
   id: string;
   name: string;
@@ -33,7 +48,7 @@ export interface Project {
   docker_containers: string[];
   domains: string[];
   databases: { type: string; name: string }[];
-  opencode_sessions: string[];
+  opencode_sessions: OpenCodeSession[];
   created_at: string;
   updated_at: string;
 }
@@ -95,7 +110,7 @@ export interface CreateProjectInput {
   docker_containers?: string[];
   domains?: string[];
   databases?: { type: string; name: string }[];
-  opencode_sessions?: string[];
+  opencode_sessions?: OpenCodeSession[];
 }
 
 export interface UpdateProjectInput {
@@ -108,7 +123,7 @@ export interface UpdateProjectInput {
   docker_containers?: string[];
   domains?: string[];
   databases?: { type: string; name: string }[];
-  opencode_sessions?: string[];
+  opencode_sessions?: OpenCodeSession[];
 }
 
 export interface CreateMilestoneInput {

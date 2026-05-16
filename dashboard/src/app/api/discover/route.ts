@@ -61,6 +61,32 @@ const PROJECT_CATEGORIES: Record<string, string> = {
   "T2R — Delivery API": "apps",
 };
 
+// ── CWD → project name mapping (for OpenCode sessions) ──
+const CWD_PROJECT_MAP: [RegExp, string][] = [
+  [/1_infra\/13_Portal/i, "Homepage Dashboard Hub"],
+  [/1_infra\/26_Homepage/i, "Homepage Dashboard Hub"],
+  [/1_infra\/1_cloud_manager/i, "Cloud Manager — CLI Unifié"],
+  [/1_infra\/10_Proxy/i, "Proxy Auth — Caddy + Authelia"],
+  [/1_infra\/11_Git-CI/i, "AI Stack — Forgejo + Woodpecker + Agents"],
+  [/1_infra\/12_Monitoring/i, "Monitoring — Prometheus + Grafana + Loki"],
+  [/1_infra\/21_Tour/i, "MinIO Backup — Tour 8To"],
+  [/1_infra\/25_Tailscale/i, "Tailscale — Mesh VPN"],
+  [/1_infra\/remote-watchdog/i, "Watchdog — Heartbeat OVH"],
+  [/1_infra\/security-audit/i, "Security Audit — Hardening"],
+  [/1_infra\/optimization/i, "Optimization — Cleanup Dedi"],
+  [/2_ai-stack/i, "AI Stack — Forgejo + Woodpecker + Agents"],
+  [/2_ai-stack\/7_roles\/00_v3/i, "Unified Agent — Assistant IA"],
+  [/2_ai-stack\/7_roles\/00_v6/i, "Hyperactive — Agent Autonome"],
+  [/3_perso\/3_Groudon/i, "Groudon — Web Crawler"],
+  [/3_perso\/4_trading/i, "T2R — Delivery API"],
+  [/3_perso\/5_appwrite/i, "Appwrite — Backend-as-a-Service"],
+  [/3_perso\/7_socialite/i, "Socialite — App Sociale"],
+  [/3_perso\/socialite/i, "Socialite — App Sociale"],
+  [/2_ai-stack\/7_roles/i, "AI Stack — Forgejo + Woodpecker + Agents"],
+  [/2_ai-stack\/11_ragflow/i, "RAGFlow — Pipeline Documentaire"],
+  [/2_ai-stack.*open-webui/i, "Open WebUI — Interface LLM"],
+];
+
 // ── Domain mapping ──
 const PROJECT_DOMAINS: Record<string, string[]> = {
   "Homepage Dashboard Hub": ["homepage.dolly-tilapia.ts.net", "dashboard.dolly-tilapia.ts.net"],
@@ -98,6 +124,39 @@ const PROJECT_DESCRIPTIONS: Record<string, string> = {
   "Docker Registry — Images Privées": "Registry Docker privé pour images custom",
   "T2R — Delivery API": "API de livraison — PostgREST + PostgreSQL",
 };
+
+// ── OpenCode session fetcher ──
+interface OpenCodeSessionAPI {
+  id: string;
+  title: string;
+  slug: string;
+  cwd: string;
+  flavor: string;
+  model: string;
+  message_count: number;
+  is_active: boolean;
+  is_recent: boolean;
+  is_pinned: boolean;
+  time_created: number;
+  time_updated: number;
+}
+
+function getOpenCodeSessions(): OpenCodeSessionAPI[] {
+  try {
+    const apiUrl = process.env.OPENCODE_API_URL || "http://opencode-dashboard:8121";
+    const raw = execSync(`curl -s ${apiUrl}/api/sessions`, { timeout: 5000, encoding: "utf-8" });
+    return JSON.parse(raw) as OpenCodeSessionAPI[];
+  } catch {
+    return [];
+  }
+}
+
+function resolveProjectByCwd(cwd: string): string | null {
+  for (const [pattern, projectName] of CWD_PROJECT_MAP) {
+    if (pattern.test(cwd)) return projectName;
+  }
+  return null;
+}
 
 // ── Database detection from container names ──
 function detectDatabases(containers: string[]): { type: string; name: string }[] {
@@ -157,11 +216,12 @@ function resolveProject(name: string, composeProject: string): string | null {
   return null;
 }
 
-// GET /api/discover — scan Docker, map to projects, update DB
+// GET /api/discover — scan Docker + OpenCode sessions, map to projects, update DB
 export async function GET() {
   try {
     const db = getDb();
     const containers = getDockerContainers();
+    const opencodeSessions = getOpenCodeSessions();
 
     // Group containers by dashboard project name
     const projectContainers: Record<string, string[]> = {};
@@ -183,12 +243,27 @@ export async function GET() {
       }
     }
 
+    // Group OpenCode sessions by project name (via cwd mapping)
+    const projectSessions: Record<string, OpenCodeSessionAPI[]> = {};
+    const unmatchedSessions: string[] = [];
+
+    for (const s of opencodeSessions) {
+      const projectName = resolveProjectByCwd(s.cwd);
+      if (projectName) {
+        if (!projectSessions[projectName]) projectSessions[projectName] = [];
+        projectSessions[projectName].push(s);
+      } else {
+        unmatchedSessions.push(`${s.title} (${s.cwd})`);
+      }
+    }
+
     // Get existing project names from DB
     const existingRows = db.prepare("SELECT id, name FROM projects").all() as { id: string; name: string }[];
     const existingMap = new Map(existingRows.map((r) => [r.name, r.id]));
 
-    // Create missing projects discovered from Docker
-    for (const projectName of Object.keys(projectContainers)) {
+    // Create missing projects discovered from Docker OR OpenCode
+    const allDiscovered = new Set([...Object.keys(projectContainers), ...Object.keys(projectSessions)]);
+    for (const projectName of allDiscovered) {
       if (!existingMap.has(projectName)) {
         const id = randomUUID();
         const now = new Date().toISOString();
@@ -202,7 +277,7 @@ export async function GET() {
       }
     }
 
-    // Update resource fields for all projects that have containers
+    // Update resource fields for all projects
     let updatedCount = 0;
     for (const [projectName, cList] of Object.entries(projectContainers)) {
       const projectId = existingMap.get(projectName);
@@ -210,7 +285,20 @@ export async function GET() {
 
       const domains = PROJECT_DOMAINS[projectName] || [];
       const databases = detectDatabases(cList);
-      const opencodeSessions: string[] = [];
+      const sessions = (projectSessions[projectName] || []).map((s) => ({
+        id: s.id,
+        title: s.title,
+        slug: s.slug,
+        cwd: s.cwd,
+        flavor: s.flavor,
+        model: s.model,
+        message_count: s.message_count,
+        is_active: s.is_active,
+        is_recent: s.is_recent,
+        is_pinned: s.is_pinned,
+        time_created: s.time_created,
+        time_updated: s.time_updated,
+      }));
 
       db.prepare(`
         UPDATE projects
@@ -220,7 +308,40 @@ export async function GET() {
         JSON.stringify(cList),
         JSON.stringify(domains),
         JSON.stringify(databases),
-        JSON.stringify(opencodeSessions),
+        JSON.stringify(sessions),
+        new Date().toISOString(),
+        projectId
+      );
+      updatedCount++;
+    }
+
+    // Also update sessions for projects that have sessions but no containers
+    for (const [projectName, sessions] of Object.entries(projectSessions)) {
+      if (projectContainers[projectName]) continue; // already updated above
+      const projectId = existingMap.get(projectName);
+      if (!projectId) continue;
+
+      const sessionData = sessions.map((s) => ({
+        id: s.id,
+        title: s.title,
+        slug: s.slug,
+        cwd: s.cwd,
+        flavor: s.flavor,
+        model: s.model,
+        message_count: s.message_count,
+        is_active: s.is_active,
+        is_recent: s.is_recent,
+        is_pinned: s.is_pinned,
+        time_created: s.time_created,
+        time_updated: s.time_updated,
+      }));
+
+      db.prepare(`
+        UPDATE projects
+        SET opencode_sessions = ?, updated_at = ?
+        WHERE id = ?
+      `).run(
+        JSON.stringify(sessionData),
         new Date().toISOString(),
         projectId
       );
@@ -233,10 +354,13 @@ export async function GET() {
 
     return NextResponse.json({
       scanned_containers: containers.length,
+      scanned_sessions: opencodeSessions.length,
       mapped_projects: Object.keys(projectContainers).length,
+      sessions_mapped: Object.keys(projectSessions).length,
       updated_projects: updatedCount,
       total_projects: parsed.length,
       unmatched_containers: unmatched,
+      unmatched_sessions: unmatchedSessions,
       projects: parsed,
     });
   } catch (error) {
