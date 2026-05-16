@@ -56,8 +56,11 @@ const PRIORITY_STYLES: Record<string, { color: string; bg: string }> = {
 
 const STATUS_STYLES: Record<string, { dot: string; label: string; bg: string }> = {
   idea: { dot: "bg-ax-yellow", label: "Idée", bg: "bg-ax-yellow/10" },
+  pending: { dot: "bg-ax-yellow", label: "En attente", bg: "bg-ax-yellow/10" },
+  todo: { dot: "bg-muted-foreground", label: "À faire", bg: "bg-muted/50" },
   "in-progress": { dot: "bg-ax-blue", label: "En cours", bg: "bg-ax-blue/10" },
   "on-hold": { dot: "bg-muted-foreground", label: "En pause", bg: "bg-muted/50" },
+  blocked: { dot: "bg-ax-red", label: "Bloqué", bg: "bg-ax-red/10" },
   done: { dot: "bg-ax-green", label: "Terminé", bg: "bg-ax-green/10" },
 };
 
@@ -330,8 +333,11 @@ export function ProjectDetailDialog({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="idea">Idée</SelectItem>
+                  <SelectItem value="pending">En attente</SelectItem>
+                  <SelectItem value="todo">À faire</SelectItem>
                   <SelectItem value="in-progress">En cours</SelectItem>
                   <SelectItem value="on-hold">En pause</SelectItem>
+                  <SelectItem value="blocked">Bloqué</SelectItem>
                   <SelectItem value="done">Terminé</SelectItem>
                 </SelectContent>
               </Select>
@@ -777,29 +783,37 @@ export function ProjectDetailDialog({
                 ) : undefined}
               </ResourceSection>
 
-{/* OpenCode sessions */}
-<ResourceSection
-  icon="⚡"
-  title="Sessions OpenCode"
-  count={project.opencode_sessions?.length || 0}
->
-  {project.opencode_sessions?.length ? (
-    <div className="space-y-1.5">
-      {project.opencode_sessions.map((s) => (
-        <div key={s.id} className="flex items-center gap-2 p-2 rounded-lg bg-[#1a2744] border border-[#2d3f5e]/50 hover:border-[#00d9ff]/30 transition-colors">
-          <span className={`w-2 h-2 rounded-full shrink-0 ${s.is_active ? "bg-[#00ff88]" : "bg-[#8899b3]"}`} />
-          <div className="flex-1 min-w-0">
-            <p className="text-xs font-medium truncate text-[#e0e8f0]">{s.title}</p>
-            <p className="text-[10px] text-[#8899b3] truncate">{s.cwd}</p>
+      {/* OpenCode sessions */}
+      <ResourceSection
+        icon="⚡"
+        title="Sessions OpenCode"
+        count={project.opencode_sessions?.length || 0}
+      >
+        {project.opencode_sessions?.length ? (
+          <div className="space-y-2">
+            {project.opencode_sessions.map((s) => {
+              const timeAgo = s.time_updated
+                ? new Date(Math.floor(s.time_updated * 1000)).toLocaleDateString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })
+                : "";
+              return (
+                <div key={s.id} className="flex items-start gap-3 p-3 rounded-lg bg-[#1a2744] border border-[#2d3f5e]/50 hover:border-[#00d9ff]/30 transition-colors">
+                  <span className={`w-2.5 h-2.5 rounded-full shrink-0 mt-1 ${s.is_active ? "bg-[#00ff88] shadow-[0_0_6px_rgba(0,255,136,0.4)]" : s.is_recent ? "bg-[#ffbe0b]" : "bg-[#8899b3]"}`} title={s.is_active ? "Active" : s.is_recent ? "Récente" : "Inactive"} />
+                  <div className="flex-1 min-w-0 space-y-1">
+                    <p className="text-sm font-medium text-[#e0e8f0] truncate">{s.title}</p>
+                    <p className="text-[11px] text-[#8899b3] truncate font-mono">{s.cwd}</p>
+                  </div>
+                  <div className="flex flex-col items-end gap-1 shrink-0">
+                    <Badge variant="outline" className="text-[10px] border-[#2d3f5e] text-[#00d9ff]">{s.model?.split("/").pop() || s.flavor}</Badge>
+                    <div className="flex items-center gap-2 text-[10px] text-[#8899b3]">
+                      <span>{s.message_count} msg</span>
+                      {timeAgo && <span>{timeAgo}</span>}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <Badge variant="outline" className="text-[9px] border-[#2d3f5e] text-[#8899b3]">{s.model?.split("/").pop() || s.flavor}</Badge>
-            <span className="text-[10px] text-[#8899b3]">{s.message_count} msg</span>
-          </div>
-        </div>
-      ))}
-    </div>
-  ) : undefined}
+        ) : undefined}
 </ResourceSection>
 
               {resourceCount === 0 && (

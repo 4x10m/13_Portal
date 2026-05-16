@@ -47,22 +47,31 @@ const PRIORITY_LABELS: Record<string, string> = {
 
 const STATUS_STYLES: Record<ProjectStatus, { label: string; color: string; dot: string; border: string; hex: string }> = {
   idea: { label: "Idée", color: "text-[#ffbe0b]", dot: "bg-[#ffbe0b]", border: "border-l-[#ffbe0b]", hex: "#ffbe0b" },
+  pending: { label: "En attente", color: "text-[#ffbe0b]", dot: "bg-[#ffbe0b]", border: "border-l-[#ffbe0b]", hex: "#ffbe0b" },
+  todo: { label: "À faire", color: "text-[#8899b3]", dot: "bg-[#8899b3]", border: "border-l-[#8899b3]", hex: "#8899b3" },
   "in-progress": { label: "En cours", color: "text-[#00d9ff]", dot: "bg-[#00d9ff]", border: "border-l-[#00d9ff]", hex: "#00d9ff" },
   "on-hold": { label: "En pause", color: "text-muted-foreground", dot: "bg-muted-foreground", border: "border-l-muted-foreground", hex: "#8899b3" },
+  blocked: { label: "Bloqué", color: "text-[#ff4757]", dot: "bg-[#ff4757]", border: "border-l-[#ff4757]", hex: "#ff4757" },
   done: { label: "Terminé", color: "text-[#00ff88]", dot: "bg-[#00ff88]", border: "border-l-[#00ff88]", hex: "#00ff88" },
 };
 
 const STATUS_CONFIG: Record<ProjectStatus, { label: string; color: string; bgColor: string }> = {
   idea: { label: "Idées", color: "text-[#ffbe0b]", bgColor: "bg-[#ffbe0b]/10" },
+  pending: { label: "En attente", color: "text-[#ffbe0b]", bgColor: "bg-[#ffbe0b]/10" },
+  todo: { label: "À faire", color: "text-[#8899b3]", bgColor: "bg-muted" },
   "in-progress": { label: "En cours", color: "text-[#00d9ff]", bgColor: "bg-[#00d9ff]/10" },
   "on-hold": { label: "En pause", color: "text-muted-foreground", bgColor: "bg-muted" },
+  blocked: { label: "Bloqués", color: "text-[#ff4757]", bgColor: "bg-[#ff4757]/10" },
   done: { label: "Terminés", color: "text-[#00ff88]", bgColor: "bg-[#00ff88]/10" },
 };
 
 const KANBAN_COLUMNS: { status: ProjectStatus; label: string; color: string }[] = [
   { status: "idea", label: "Idée", color: "text-[#ffbe0b]" },
+  { status: "pending", label: "En attente", color: "text-[#ffbe0b]" },
+  { status: "todo", label: "À faire", color: "text-[#8899b3]" },
   { status: "in-progress", label: "En cours", color: "text-[#00d9ff]" },
   { status: "on-hold", label: "En pause", color: "text-muted-foreground" },
+  { status: "blocked", label: "Bloqué", color: "text-[#ff4757]" },
   { status: "done", label: "Terminé", color: "text-[#00ff88]" },
 ];
 
@@ -129,9 +138,9 @@ function DomainLinks({ project }: { project: Project }) {
 
 // ── Progress bar for project completion ──
 function ProjectProgressBar({ project }: { project: ProjectWithStats }) {
-  // Use done status as 100%, in-progress as ~60%, idea as ~20%, on-hold as ~40%
-  const pct = project.status === "done" ? 100 : project.status === "in-progress" ? 55 : project.status === "on-hold" ? 35 : 10;
-  const color = STATUS_STYLES[project.status].hex;
+  const pctMap: Record<string, number> = { done: 100, "in-progress": 55, blocked: 40, "on-hold": 35, pending: 20, todo: 15, idea: 10 };
+  const pct = pctMap[project.status] ?? 20;
+  const color = STATUS_STYLES[project.status]?.hex ?? "#8899b3";
   return (
     <div className="h-1 bg-[#2d3f5e] rounded-full overflow-hidden">
       <div
@@ -262,7 +271,7 @@ function TimelineView({ projects, onProjectClick }: { projects: ProjectWithStats
 
   const toPercent = (iso: string) => ((new Date(iso).getTime() - minDate) / range) * 100;
 
-  const DOT_COLORS: Record<string, string> = { idea: "#ffbe0b", "in-progress": "#00d9ff", "on-hold": "#8899b3", done: "#00ff88" };
+  const DOT_COLORS: Record<string, string> = { idea: "#ffbe0b", pending: "#ffbe0b", todo: "#8899b3", "in-progress": "#00d9ff", "on-hold": "#8899b3", blocked: "#ff4757", done: "#00ff88" };
 
   return ( <div className="relative border border-[#2d3f5e] rounded-xl p-6 bg-[#1a2744]/50 overflow-x-auto">
     {/* Time axis */}
@@ -733,7 +742,7 @@ export default function ProjetsPage() {
 
       {/* ── Kanban view ── */}
       {viewMode === "kanban" && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 flex-1 min-h-0">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-7 gap-3 flex-1 min-h-0">
           {KANBAN_COLUMNS.map((col) => {
             const colProjects = sortedProjects.filter((p) => p.status === col.status);
 

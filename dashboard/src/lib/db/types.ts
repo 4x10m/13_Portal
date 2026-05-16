@@ -1,6 +1,6 @@
 // ── Types for the AxiiomLab Dashboard DB ──
 
-export type ProjectStatus = "idea" | "in-progress" | "done" | "on-hold";
+export type ProjectStatus = "idea" | "pending" | "todo" | "in-progress" | "on-hold" | "blocked" | "done";
 export type ProjectPriority = "low" | "medium" | "high" | "critical";
 export type ProjectCategory = "infra" | "ai" | "apps" | "perso" | "devops" | "general";
 export type MilestoneStatus = "pending" | "in-progress" | "done";

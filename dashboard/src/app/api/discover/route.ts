@@ -8,7 +8,8 @@ export const dynamic = "force-dynamic";
 
 // ── Mapping: compose project name → dashboard project name ──
 const COMPOSE_PROJECT_MAP: Record<string, string> = {
-  homepage: "Homepage Dashboard Hub",
+  homepage: "Portal Dashboard Hub",
+  portal: "Portal Dashboard Hub",
   "1_cloud_manager": "Cloud Manager — CLI Unifié",
   "opencode-communautary": "AI Stack — Forgejo + Woodpecker + Agents",
   "opencode-light": "AI Stack — Forgejo + Woodpecker + Agents",
@@ -59,12 +60,25 @@ const PROJECT_CATEGORIES: Record<string, string> = {
   "Meilisearch — Moteur de Recherche": "ai",
   "Docker Registry — Images Privées": "devops",
   "T2R — Delivery API": "apps",
+  "Portal Dashboard Hub": "infra",
+  "Infra — Ops OVH": "infra",
+  "AI Test Lab — Expérimentations": "ai",
+  "MCP Servers — Tool Bridge": "ai",
+  "LiteLLM — Proxy Modèles": "ai",
+  "Youtuber — Automation": "perso",
+  "Watchdog — Heartbeat OVH": "infra",
+  "Security Audit — Hardening": "infra",
+  "Optimization — Cleanup Dedi": "infra",
+  "Tailscale — Mesh VPN": "infra",
 };
 
 // ── CWD → project name mapping (for OpenCode sessions) ──
+// ORDER MATTERS: more specific patterns MUST come before broader ones
 const CWD_PROJECT_MAP: [RegExp, string][] = [
-  [/1_infra\/13_Portal/i, "Homepage Dashboard Hub"],
-  [/1_infra\/26_Homepage/i, "Homepage Dashboard Hub"],
+  // ── Infra (1_infra) — specific before broad ──
+  [/1_infra\/13_Portal/i, "Portal Dashboard Hub"],
+  [/1_infra\/26_Homepage/i, "Portal Dashboard Hub"],
+  [/1_infra\/14_CLI/i, "Cloud Manager — CLI Unifié"],
   [/1_infra\/1_cloud_manager/i, "Cloud Manager — CLI Unifié"],
   [/1_infra\/10_Proxy/i, "Proxy Auth — Caddy + Authelia"],
   [/1_infra\/11_Git-CI/i, "AI Stack — Forgejo + Woodpecker + Agents"],
@@ -74,22 +88,39 @@ const CWD_PROJECT_MAP: [RegExp, string][] = [
   [/1_infra\/remote-watchdog/i, "Watchdog — Heartbeat OVH"],
   [/1_infra\/security-audit/i, "Security Audit — Hardening"],
   [/1_infra\/optimization/i, "Optimization — Cleanup Dedi"],
-  [/2_ai-stack/i, "AI Stack — Forgejo + Woodpecker + Agents"],
-  [/2_ai-stack\/7_roles\/00_v3/i, "Unified Agent — Assistant IA"],
+  [/1_infra$/i, "Infra — Ops OVH"],               // root 1_infra (32 sessions)
+  // ── AI Stack (2_ai-stack) — specific before broad ──
   [/2_ai-stack\/7_roles\/00_v6/i, "Hyperactive — Agent Autonome"],
-  [/3_perso\/3_Groudon/i, "Groudon — Web Crawler"],
-  [/3_perso\/4_trading/i, "T2R — Delivery API"],
-  [/3_perso\/5_appwrite/i, "Appwrite — Backend-as-a-Service"],
-  [/3_perso\/7_socialite/i, "Socialite — App Sociale"],
-  [/3_perso\/socialite/i, "Socialite — App Sociale"],
+  [/2_ai-stack\/7_roles\/00_v3/i, "Unified Agent — Assistant IA"],
+  [/2_ai-stack\/7_roles\/00_v4/i, "AI Stack — Forgejo + Woodpecker + Agents"],
   [/2_ai-stack\/7_roles/i, "AI Stack — Forgejo + Woodpecker + Agents"],
   [/2_ai-stack\/11_ragflow/i, "RAGFlow — Pipeline Documentaire"],
   [/2_ai-stack.*open-webui/i, "Open WebUI — Interface LLM"],
+  [/2_ai-stack\/4_frameworks\/ai-test-lab/i, "AI Test Lab — Expérimentations"],
+  [/2_ai-stack\/4_frameworks\/opencode-communautary/i, "AI Stack — Forgejo + Woodpecker + Agents"],
+  [/2_ai-stack\/6_tools\/4_mcp/i, "MCP Servers — Tool Bridge"],
+  [/2_ai-stack\/6_tools\/4_llm-provider/i, "LiteLLM — Proxy Modèles"],
+  [/2_ai-stack\/6_tools\/3_rag/i, "RAGFlow — Pipeline Documentaire"],
+  [/2_ai-stack\/6_tools\/1_router/i, "LiteLLM — Proxy Modèles"],
+  [/2_ai-stack/i, "AI Stack — Forgejo + Woodpecker + Agents"],
+  // ── Perso (3_perso) — specific before broad ──
+  [/3_perso\/3_Groudon/i, "Groudon — Web Crawler"],
+  [/3_perso\/4_trading/i, "T2R — Delivery API"],
+  [/3_perso\/1_T2R/i, "T2R — Delivery API"],
+  [/3_perso\/5_appwrite/i, "Appwrite — Backend-as-a-Service"],
+  [/3_perso\/7_socialite/i, "Socialite — App Sociale"],
+  [/3_perso\/socialite/i, "Socialite — App Sociale"],
+  [/3_perso\/4_booker/i, "Booker — Réservation"],
+  [/3_perso\/youtuber/i, "Youtuber — Automation"],
+  // ── Working directory ──
+  [/Working\/46_Autonomous/i, "AI Stack — Forgejo + Woodpecker + Agents"],
+  // ── Home / root Codebase ──
+  [/Codebase$/i, "Infra — Ops OVH"],
 ];
 
 // ── Domain mapping ──
 const PROJECT_DOMAINS: Record<string, string[]> = {
-  "Homepage Dashboard Hub": ["homepage.dolly-tilapia.ts.net", "dashboard.dolly-tilapia.ts.net"],
+  "Portal Dashboard Hub": ["homepage.dolly-tilapia.ts.net", "dashboard.dolly-tilapia.ts.net"],
   "Cloud Manager — CLI Unifié": ["cloud.dolly-tilapia.ts.net"],
   "AI Stack — Forgejo + Woodpecker + Agents": [
     "forgejo.dolly-tilapia.ts.net",
@@ -123,6 +154,16 @@ const PROJECT_DESCRIPTIONS: Record<string, string> = {
   "Meilisearch — Moteur de Recherche": "Moteur de recherche full-text Meilisearch",
   "Docker Registry — Images Privées": "Registry Docker privé pour images custom",
   "T2R — Delivery API": "API de livraison — PostgREST + PostgreSQL",
+  "Portal Dashboard Hub": "Dashboard central AxiiomLab — projets, ops, ressources, monitoring",
+  "Infra — Ops OVH": "Infrastructure OVH dédiée — scripts, config, sécurité, optimisation",
+  "AI Test Lab — Expérimentations": "Lab d'expérimentations IA — tests modèles, benchmarks, protos",
+  "MCP Servers — Tool Bridge": "Serveurs MCP — bridge tools LLM ↔ APIs externes",
+  "LiteLLM — Proxy Modèles": "Proxy unifié LLM — routing, rate-limit, multi-provider",
+  "Youtuber — Automation": "Automation YouTube — transcripts, shorts, upload",
+  "Watchdog — Heartbeat OVH": "Heartbeat serveur + client macOS + reboot auto OVH",
+  "Security Audit — Hardening": "Audit & hardening — fail2ban, rkhunter, UFW, auditd",
+  "Optimization — Cleanup Dedi": "Nettoyage & optimisation serveur dédié OVH",
+  "Tailscale — Mesh VPN": "Mesh VPN Tailscale — 38 services, config, restore",
 };
 
 // ── OpenCode session fetcher ──
@@ -220,6 +261,24 @@ function resolveProject(name: string, composeProject: string): string | null {
 export async function GET() {
   try {
     const db = getDb();
+
+    // ── Migrate renamed projects ──
+    const RENAMED_PROJECTS: Record<string, string> = {
+      "Homepage Dashboard Hub": "Portal Dashboard Hub",
+    };
+    for (const [oldName, newName] of Object.entries(RENAMED_PROJECTS)) {
+      const old = db.prepare("SELECT id FROM projects WHERE name = ?").get(oldName) as { id: string } | undefined;
+      const nw = db.prepare("SELECT id FROM projects WHERE name = ?").get(newName) as { id: string } | undefined;
+      if (old && nw) {
+        // Merge: move milestones/links to new, delete old
+        db.prepare("UPDATE milestones SET project_id = ? WHERE project_id = ?").run(nw.id, old.id);
+        db.prepare("UPDATE links SET project_id = ? WHERE project_id = ?").run(nw.id, old.id);
+        db.prepare("DELETE FROM projects WHERE id = ?").run(old.id);
+      } else if (old && !nw) {
+        db.prepare("UPDATE projects SET name = ?, updated_at = ? WHERE id = ?").run(newName, new Date().toISOString(), old.id);
+      }
+    }
+
     const containers = getDockerContainers();
     const opencodeSessions = getOpenCodeSessions();
 

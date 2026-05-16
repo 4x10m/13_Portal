@@ -149,12 +149,15 @@ export function NewProjectDialog({
               <SelectTrigger>
                 <SelectValue placeholder="Statut" />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="idea">Idée</SelectItem>
-                <SelectItem value="in-progress">En cours</SelectItem>
-                <SelectItem value="on-hold">En pause</SelectItem>
-                <SelectItem value="done">Terminé</SelectItem>
-              </SelectContent>
+                  <SelectContent>
+                    <SelectItem value="idea">Idée</SelectItem>
+                    <SelectItem value="pending">En attente</SelectItem>
+                    <SelectItem value="todo">À faire</SelectItem>
+                    <SelectItem value="in-progress">En cours</SelectItem>
+                    <SelectItem value="on-hold">En pause</SelectItem>
+                    <SelectItem value="blocked">Bloqué</SelectItem>
+                    <SelectItem value="done">Terminé</SelectItem>
+                  </SelectContent>
             </Select>
           </div>
 
