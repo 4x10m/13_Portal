@@ -1,0 +1,130 @@
+import Database from "better-sqlite3";
+import path from "path";
+import fs from "fs";
+import type { ProjectDB, Project, ProjectStatus, ProjectPriority, ProjectCategory } from "./types";
+
+const DB_PATH = process.env.DATABASE_PATH || "./data/dashboard.db";
+
+let db: Database.Database | null = null;
+
+// ── Validation constants (single source of truth) ──
+
+export const VALID_STATUSES: ProjectStatus[] = ["idea", "in-progress", "done", "on-hold"];
+export const VALID_PRIORITIES: ProjectPriority[] = ["low", "medium", "high", "critical"];
+export const VALID_CATEGORIES: ProjectCategory[] = ["infra", "ai", "apps", "perso", "devops", "general"];
+
+// ── Parse JSON fields from DB row to Project ──
+
+export function parseProject(row: ProjectDB): Project {
+  let docker_containers: string[] = [];
+  let domains: string[] = [];
+  let databases: { type: string; name: string }[] = [];
+  let opencode_sessions: string[] = [];
+  try { docker_containers = JSON.parse(row.docker_containers || "[]"); } catch { /* */ }
+  try { domains = JSON.parse(row.domains || "[]"); } catch { /* */ }
+  try { databases = JSON.parse(row.databases || "[]"); } catch { /* */ }
+  try { opencode_sessions = JSON.parse(row.opencode_sessions || "[]"); } catch { /* */ }
+  return { ...row, docker_containers, domains, databases, opencode_sessions };
+}
+
+// ── Schema ──
+
+const SCHEMA = `
+CREATE TABLE IF NOT EXISTS projects (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  description TEXT DEFAULT '',
+  status TEXT NOT NULL DEFAULT 'idea',
+  priority TEXT NOT NULL DEFAULT 'medium',
+  category TEXT DEFAULT 'general',
+  assigned_agent TEXT DEFAULT '',
+  docker_containers TEXT DEFAULT '[]',
+  domains TEXT DEFAULT '[]',
+  databases TEXT DEFAULT '[]',
+  opencode_sessions TEXT DEFAULT '[]',
+  created_at TEXT DEFAULT (datetime('now')),
+  updated_at TEXT DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS milestones (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  description TEXT DEFAULT '',
+  status TEXT NOT NULL DEFAULT 'pending',
+  due_date TEXT,
+  created_at TEXT DEFAULT (datetime('now')),
+  updated_at TEXT DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS tasks (
+  id TEXT PRIMARY KEY,
+  milestone_id TEXT NOT NULL REFERENCES milestones(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  description TEXT DEFAULT '',
+  status TEXT NOT NULL DEFAULT 'todo',
+  assignee TEXT DEFAULT '',
+  sort_order INTEGER DEFAULT 0,
+  created_at TEXT DEFAULT (datetime('now')),
+  updated_at TEXT DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS links (
+  id TEXT PRIMARY KEY,
+  task_id TEXT REFERENCES tasks(id) ON DELETE CASCADE,
+  project_id TEXT REFERENCES projects(id) ON DELETE CASCADE,
+  url TEXT NOT NULL,
+  label TEXT NOT NULL,
+  created_at TEXT DEFAULT (datetime('now'))
+);
+`;
+
+/** Migrate existing DB — add new columns if missing */
+function migrate(database: Database.Database) {
+  const columns = database.prepare("PRAGMA table_info(projects)").all() as { name: string }[];
+  const colNames = new Set(columns.map((c) => c.name));
+
+  if (!colNames.has("assigned_agent")) {
+    database.exec("ALTER TABLE projects ADD COLUMN assigned_agent TEXT DEFAULT ''");
+  }
+  if (!colNames.has("docker_containers")) {
+    database.exec("ALTER TABLE projects ADD COLUMN docker_containers TEXT DEFAULT '[]'");
+  }
+  if (!colNames.has("domains")) {
+    database.exec("ALTER TABLE projects ADD COLUMN domains TEXT DEFAULT '[]'");
+  }
+  if (!colNames.has("databases")) {
+    database.exec("ALTER TABLE projects ADD COLUMN databases TEXT DEFAULT '[]'");
+  }
+  if (!colNames.has("opencode_sessions")) {
+    database.exec("ALTER TABLE projects ADD COLUMN opencode_sessions TEXT DEFAULT '[]'");
+  }
+}
+
+function getDb(): Database.Database {
+  if (db) return db;
+
+  // Ensure the data directory exists
+  const dir = path.dirname(DB_PATH);
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+
+  db = new Database(DB_PATH);
+
+  // Enable WAL mode for better concurrent read performance
+  db.pragma("journal_mode = WAL");
+
+  // Enable foreign keys
+  db.pragma("foreign_keys = ON");
+
+  // Execute schema (CREATE TABLE IF NOT EXISTS — idempotent)
+  db.exec(SCHEMA);
+
+  // Run migrations for existing DBs
+  migrate(db);
+
+  return db;
+}
+
+export { getDb };
