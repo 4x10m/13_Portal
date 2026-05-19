@@ -70,6 +70,10 @@ const PROJECT_CATEGORIES: Record<string, string> = {
   "Security Audit — Hardening": "infra",
   "Optimization — Cleanup Dedi": "infra",
   "Tailscale — Mesh VPN": "infra",
+  "Groudon — Web Crawler": "perso",
+  "Meta Harness — LLM Benchmarks": "ai",
+  "Memory — Agent Memory Store": "ai",
+  "ExoCog — IA Cognitive": "ai",
 };
 
 // ── CWD → project name mapping (for OpenCode sessions) ──
@@ -102,6 +106,8 @@ const CWD_PROJECT_MAP: [RegExp, string][] = [
   [/2_ai-stack\/6_tools\/4_llm-provider/i, "LiteLLM — Proxy Modèles"],
   [/2_ai-stack\/6_tools\/3_rag/i, "RAGFlow — Pipeline Documentaire"],
   [/2_ai-stack\/6_tools\/1_router/i, "LiteLLM — Proxy Modèles"],
+  [/2_ai-stack\/6_tools\/9_meta-harness/i, "Meta Harness — LLM Benchmarks"],
+  [/2_ai-stack\/6_tools\/2_memory/i, "Memory — Agent Memory Store"],
   [/2_ai-stack/i, "AI Stack — Forgejo + Woodpecker + Agents"],
   // ── Perso (3_perso) — specific before broad ──
   [/3_perso\/3_Groudon/i, "Groudon — Web Crawler"],
@@ -112,10 +118,52 @@ const CWD_PROJECT_MAP: [RegExp, string][] = [
   [/3_perso\/socialite/i, "Socialite — App Sociale"],
   [/3_perso\/4_booker/i, "Booker — Réservation"],
   [/3_perso\/youtuber/i, "Youtuber — Automation"],
-  // ── Working directory ──
-  [/Working\/46_Autonomous/i, "AI Stack — Forgejo + Woodpecker + Agents"],
+  // ── Working/46_Autonomous — specific before broad Working ──
+  [/Working\/46_Autonomous\/6_tools\/3_RAG-Sources/i, "RAGFlow — Pipeline Documentaire"],
+  [/Working\/46_Autonomous\/4_frameworks\/opencode-communautary/i, "AI Stack — Forgejo + Woodpecker + Agents"],
+  [/Working\/46_Autonomous\/6_tools\/9_agent-benchmark/i, "Meta Harness — LLM Benchmarks"],
+  [/Working\/46_Autonomous\/4_frameworks\/my-harness/i, "Meta Harness — LLM Benchmarks"],
+  [/Working\/46_Autonomous\/7_roles\/00_v4/i, "AI Stack — Forgejo + Woodpecker + Agents"],
+  [/Working\/46_Autonomous\/7_roles\/00_v3/i, "Unified Agent — Assistant IA"],
+  [/Working\/46_Autonomous\/7_roles\/00_v6/i, "Hyperactive — Agent Autonome"],
+  [/Working\/46_Autonomous\/6_tools\/0_searcher/i, "MCP Servers — Tool Bridge"],
+  [/Working\/46_Autonomous\/5_fine-tunning/i, "AI Test Lab — Expérimentations"],
+  [/Working\/46_Autonomous\/fine-tunning/i, "AI Test Lab — Expérimentations"],
+  [/Working\/00_Inbox/i, "Infra — Ops OVH"],
+  [/Working\/46_Autonomous/i, "AI Test Lab — Expérimentations"],
+  // ── Working/50_4x10m ──
+  [/Working\/50_4x10m\/my_human/i, "ExoCog — IA Cognitive"],
+  [/Working\/50_4x10m\/33_ExoCog/i, "ExoCog — IA Cognitive"],
+  [/Working\/50_4x10m\/9_sql_human_brain/i, "ExoCog — IA Cognitive"],
+  [/Working\/50_4x10m\/9_human_brain/i, "ExoCog — IA Cognitive"],
+  [/Working\/50_4x10m/i, "ExoCog — IA Cognitive"],
+  // ── Working/31_Axiiomlab ──
+  [/Working\/31_Axiiomlab\/remote-watchdog/i, "Watchdog — Heartbeat OVH"],
+  [/Working\/31_Axiiomlab/i, "Infra — Ops OVH"],
+  // ── Other Working paths ──
+  [/Working\/03_BASB/i, "Infra — Ops OVH"],
+  [/Working\/cloud_manager/i, "Cloud Manager — CLI Unifié"],
+  [/Working\/daily-reconstruction/i, "Infra — Ops OVH"],
+  [/Working\/3_perso\/4_trading/i, "T2R — Delivery API"],
+  // ── Codebase extras ──
+  [/Codebase\/3_perso\/3_ExoCog/i, "ExoCog — IA Cognitive"],
+  [/Codebase\/0_conception/i, "Infra — Ops OVH"],
+  [/^\/home\/debian\/Working$/i, "Infra — Ops OVH"],
   // ── Home / root Codebase ──
   [/Codebase$/i, "Infra — Ops OVH"],
+  // ── Bare /home/debian and /workspace (container CWDs) ──
+  [/^\/home\/debian$/i, "Infra — Ops OVH"],
+  [/^\/workspace$/i, "AI Stack — Forgejo + Woodpecker + Agents"],
+  // ── OpenCode internal paths ──
+  [/\.opencode/i, "AI Stack — Forgejo + Woodpecker + Agents"],
+  [/\.openclaw/i, "AI Stack — Forgejo + Woodpecker + Agents"],
+  [/\.config\/opencode/i, "AI Stack — Forgejo + Woodpecker + Agents"],
+  [/\.context-api/i, "RAGFlow — Pipeline Documentaire"],
+  [/openwrk-workspace/i, "AI Stack — Forgejo + Woodpecker + Agents"],
+  [/openwork-workspace/i, "AI Stack — Forgejo + Woodpecker + Agents"],
+  [/ia-memory-rnd/i, "Memory — Agent Memory Store"],
+  [/opencode-daemon/i, "AI Stack — Forgejo + Woodpecker + Agents"],
+  [/^\/tmp$/i, "AI Test Lab — Expérimentations"],
 ];
 
 // ── Domain mapping ──
@@ -164,9 +212,13 @@ const PROJECT_DESCRIPTIONS: Record<string, string> = {
   "Security Audit — Hardening": "Audit & hardening — fail2ban, rkhunter, UFW, auditd",
   "Optimization — Cleanup Dedi": "Nettoyage & optimisation serveur dédié OVH",
   "Tailscale — Mesh VPN": "Mesh VPN Tailscale — 38 services, config, restore",
+  "Groudon — Web Crawler": "Crawler web Groudon — monitoring sites, scoring, pricing data",
+  "Meta Harness — LLM Benchmarks": "Harness de benchmarks LLM — évaluation, comparaison modèles",
+  "Memory — Agent Memory Store": "Store mémoire pour agents IA — persistance contextuelle",
+  "ExoCog — IA Cognitive": "IA cognitive — modélisation cerveau humain, SQL brain, ExoCog",
 };
 
-// ── OpenCode session fetcher ──
+// ── OpenCode session fetcher (reads directly from SQLite DB) ──
 interface OpenCodeSessionAPI {
   id: string;
   title: string;
@@ -184,10 +236,46 @@ interface OpenCodeSessionAPI {
 
 function getOpenCodeSessions(): OpenCodeSessionAPI[] {
   try {
-    const apiUrl = process.env.OPENCODE_API_URL || "http://opencode-dashboard:8121";
-    const raw = execSync(`curl -s ${apiUrl}/api/sessions`, { timeout: 5000, encoding: "utf-8" });
-    return JSON.parse(raw) as OpenCodeSessionAPI[];
-  } catch {
+    const srcPath = process.env.OPENCODE_DB_PATH || "/home/debian/.local/share/opencode/opencode.db";
+    const Database = require("better-sqlite3");
+    // Open readonly — WAL is handled internally by better-sqlite3
+    // No need to copy: readonly mode works even with WAL present
+    const ocDb = new Database(srcPath, { readonly: true });
+
+    const now = Date.now();
+    const oneDay = 86_400_000;
+    // Lightweight query — skip JOIN with messages to avoid OOM on 1.3GB DB
+    const rows = ocDb.prepare(`
+      SELECT s.id, s.title, s.slug, s.directory as cwd, s.model, s.time_created, s.time_updated
+      FROM session s
+      WHERE s.time_archived IS NULL
+      ORDER BY s.time_updated DESC
+    `).all() as Array<{
+      id: string; title: string; slug: string; cwd: string; model: string;
+      time_created: number; time_updated: number;
+    }>;
+    ocDb.close();
+
+    return rows.map((r: any) => {
+      let modelId = "";
+      try { modelId = JSON.parse(r.model || "{}").id || ""; } catch { modelId = r.model || ""; }
+      return {
+        id: r.id,
+        title: r.title,
+        slug: r.slug,
+        cwd: r.cwd,
+        flavor: "",
+        model: modelId,
+        message_count: 0,
+        is_active: (now - r.time_updated) < oneDay,
+        is_recent: (now - r.time_updated) < 7 * oneDay,
+        is_pinned: false,
+        time_created: r.time_created,
+        time_updated: r.time_updated,
+      };
+    });
+  } catch (e) {
+    console.error("OpenCode DB read error:", e);
     return [];
   }
 }

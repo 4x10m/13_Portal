@@ -41,13 +41,14 @@ services:
       - /home/debian/Codebase/1_infra/1_cloud_manager:/cloud-manager:ro
       - /home/debian/Codebase:/home/debian/Codebase:ro
       - /home/debian/.opencode/groudon-pricing-cache.json:/app/data/groudon/pricing-cache.json:ro
+      - /home/debian/.local/share/opencode:/opencode:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
     env_file:
       - .env
     environment:
       - HOSTNAME=0.0.0.0
       - DATABASE_PATH=/app/data/dashboard.db
-      - OPENCODE_API_URL=http://opencode-dashboard:8121
+      - OPENCODE_DB_PATH=/opencode/opencode.db
       - CLOUD_MANAGER_SCRIPT=/cloud-manager/cloud_manager.sh
       - CODEBASE_DIR=/home/debian/Codebase
     networks:

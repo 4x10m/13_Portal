@@ -1,7 +1,7 @@
 import Database from "better-sqlite3";
 import path from "path";
 import fs from "fs";
-import type { ProjectDB, Project, ProjectStatus, ProjectPriority, ProjectCategory, OpenCodeSession } from "./types";
+import type { ProjectDB, Project, ProjectStatus, ProjectPriority, ProjectCategory, OpenCodeSession, PromptQueueStatus } from "./types";
 
 const DB_PATH = process.env.DATABASE_PATH || "./data/dashboard.db";
 
@@ -9,7 +9,8 @@ let db: Database.Database | null = null;
 
 // ── Validation constants (single source of truth) ──
 
-export const VALID_STATUSES: ProjectStatus[] = ["idea", "in-progress", "done", "on-hold"];
+export const VALID_STATUSES: ProjectStatus[] = ["idea", "pending", "todo", "in-progress", "on-hold", "blocked", "done"];
+export const VALID_PROMPT_STATUSES: PromptQueueStatus[] = ["pending", "running", "done", "failed", "cancelled"];
 export const VALID_PRIORITIES: ProjectPriority[] = ["low", "medium", "high", "critical"];
 export const VALID_CATEGORIES: ProjectCategory[] = ["infra", "ai", "apps", "perso", "devops", "general"];
 
@@ -77,13 +78,27 @@ CREATE TABLE IF NOT EXISTS tasks (
   updated_at TEXT DEFAULT (datetime('now'))
 );
 
-CREATE TABLE IF NOT EXISTS links (
+  CREATE TABLE IF NOT EXISTS links (
   id TEXT PRIMARY KEY,
   task_id TEXT REFERENCES tasks(id) ON DELETE CASCADE,
   project_id TEXT REFERENCES projects(id) ON DELETE CASCADE,
   url TEXT NOT NULL,
   label TEXT NOT NULL,
   created_at TEXT DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS prompt_queue (
+  id TEXT PRIMARY KEY,
+  prompt TEXT NOT NULL,
+  project_id TEXT REFERENCES projects(id) ON DELETE SET NULL,
+  project_name TEXT,
+  target_cwd TEXT,
+  target_model TEXT NOT NULL DEFAULT 'default',
+  status TEXT NOT NULL DEFAULT 'pending',
+  result TEXT,
+  created_at TEXT DEFAULT (datetime('now')),
+  started_at TEXT,
+  finished_at TEXT
 );
 `;
 

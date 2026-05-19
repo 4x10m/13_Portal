@@ -161,6 +161,11 @@ export function PromptBuilderPanel({ open, onOpenChange }: { open: boolean; onOp
   const [improving, setImproving] = useState(false);
   const [improveResult, setImproveResult] = useState<{ improved: string; suggestions: string[] } | null>(null);
   const [backendStatus, setBackendStatus] = useState<"unknown" | "online" | "offline">("unknown");
+  const [enqueueing, setEnqueueing] = useState(false);
+  const [showEnqueue, setShowEnqueue] = useState(false);
+  const [enqueueProject, setEnqueueProject] = useState("");
+  const [enqueueCwd, setEnqueueCwd] = useState("");
+  const [enqueueModel, setEnqueueModel] = useState("default");
 
   // Computed preview
   const preview = useMemo(() => generatePrompt({ role, task, context, constraints, format, formatDetails, examples }),
@@ -329,6 +334,34 @@ export function PromptBuilderPanel({ open, onOpenChange }: { open: boolean; onOp
     toast.success("Prompt amélioré copié");
   }, [improveResult]);
 
+  const handleEnqueue = useCallback(async () => {
+    if (!preview.trim()) { toast.error("Rien à envoyer"); return; }
+    setEnqueueing(true);
+    try {
+      const res = await fetch("/api/prompt-queue", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          prompt: preview,
+          project_name: enqueueProject || null,
+          target_cwd: enqueueCwd || null,
+          target_model: enqueueModel || "default",
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success(`Prompt enqueued (id: ${data.id?.slice(0, 8)}…)`);
+        setShowEnqueue(false);
+      } else {
+        toast.error("Erreur enqueue: " + (data.error || "inconnue"));
+      }
+    } catch {
+      toast.error("Erreur réseau lors de l'enqueue");
+    } finally {
+      setEnqueueing(false);
+    }
+  }, [preview, enqueueProject, enqueueCwd, enqueueModel]);
+
   const loadFromHistory = useCallback((item: HistoryItem) => {
     navigator.clipboard.writeText(item.fullPrompt);
     toast.success("Prompt de l'historique copié");
@@ -374,8 +407,9 @@ export function PromptBuilderPanel({ open, onOpenChange }: { open: boolean; onOp
           </div>
           <div className="ml-auto flex gap-1.5">
             <Button variant="outline" size="sm" className="text-xs h-7" onClick={handleCopy} disabled={!preview.trim()}>📋 Copier</Button>
-            <Button variant="outline" size="sm" className="text-xs h-7" onClick={handleDownload} disabled={!preview.trim()}>⬇️ .txt</Button>
-            <Button variant="outline" size="sm" className="text-xs h-7 text-red-400 border-red-500/30 hover:bg-red-500/10" onClick={handleClear}>🗑️ Effacer</Button>
+        <Button variant="outline" size="sm" className="text-xs h-7" onClick={handleDownload} disabled={!preview.trim()}>⬇️ .txt</Button>
+        <Button variant="outline" size="sm" className="text-xs h-7 border-ax-green/30 text-ax-green hover:bg-ax-green/10" onClick={() => setShowEnqueue(!showEnqueue)} disabled={!preview.trim()}>🚀 Enqueue</Button>
+        <Button variant="outline" size="sm" className="text-xs h-7 text-red-400 border-red-500/30 hover:bg-red-500/10" onClick={handleClear}>🗑️ Effacer</Button>
           </div>
         </div>
 
@@ -681,33 +715,81 @@ export function PromptBuilderPanel({ open, onOpenChange }: { open: boolean; onOp
           </div>
         )}
 
-        {/* ══════ HISTORY VIEW ══════ */}
-        {view === "history" && (
-          <div className="space-y-2">
-            {history.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-8">Aucun historique — copiez des prompts pour les sauvegarder</p>
-            ) : (
-              <>
-                {history.map((item) => (
-                  <Card key={item.id} className="cursor-pointer hover:border-ax-blue/50 transition-colors"
-                    onClick={() => loadFromHistory(item)}>
-                    <CardContent className="p-3">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs font-medium">Prompt #{item.id}</span>
-                        <span className="text-[10px] text-muted-foreground">{item.date}</span>
-                      </div>
-                      <p className="text-xs text-muted-foreground line-clamp-2">{item.preview}</p>
-                    </CardContent>
-                  </Card>
-                ))}
-                <button onClick={() => { setHistory([]); localStorage.removeItem(HISTORY_KEY); toast.success("Historique effacé"); }}
-                  className="text-xs text-red-400 hover:underline block mx-auto mt-2">
-                  🗑️ Effacer l'historique
-                </button>
-              </>
-            )}
-          </div>
-        )}
+  {/* ══════ HISTORY VIEW ══════ */}
+  {view === "history" && (
+  <div className="space-y-2">
+    {history.length === 0 ? (
+    <p className="text-sm text-muted-foreground text-center py-8">Aucun historique — copiez des prompts pour les sauvegarder</p>
+    ) : (
+    <>
+    {history.map((item) => (
+    <Card key={item.id} className="cursor-pointer hover:border-ax-blue/50 transition-colors"
+      onClick={() => loadFromHistory(item)}>
+      <CardContent className="p-3">
+        <div className="flex items-center justify-between mb-1">
+          <span className="text-xs font-medium">Prompt #{item.id}</span>
+          <span className="text-[10px] text-muted-foreground">{item.date}</span>
+        </div>
+        <p className="text-xs text-muted-foreground line-clamp-2">{item.preview}</p>
+      </CardContent>
+    </Card>
+    ))}
+    <button onClick={() => { setHistory([]); localStorage.removeItem(HISTORY_KEY); toast.success("Historique effacé"); }}
+      className="text-xs text-red-400 hover:underline block mx-auto mt-2">
+      🗑️ Effacer l'historique
+    </button>
+    </>
+    )}
+  </div>
+  )}
+
+  {/* ══════ ENQUEUE PANEL ══════ */}
+  {showEnqueue && (
+  <Card className="border-ax-green/30">
+    <CardHeader className="pb-2">
+      <CardTitle className="text-sm flex items-center gap-2">
+        🚀 Enqueue — Envoyer à un agent OpenCode
+      </CardTitle>
+    </CardHeader>
+    <CardContent className="space-y-3">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+        <div>
+          <label className="text-[11px] text-muted-foreground font-medium">Projet cible</label>
+          <Input value={enqueueProject} onChange={(e) => setEnqueueProject(e.target.value)}
+            placeholder="Ex: AI Test Lab" className="h-7 text-xs mt-1" />
+        </div>
+        <div>
+          <label className="text-[11px] text-muted-foreground font-medium">CWD (répertoire de travail)</label>
+          <Input value={enqueueCwd} onChange={(e) => setEnqueueCwd(e.target.value)}
+            placeholder="Ex: /home/debian/Codebase/2_ai-stack" className="h-7 text-xs mt-1" />
+        </div>
+        <div>
+          <label className="text-[11px] text-muted-foreground font-medium">Modèle</label>
+          <select value={enqueueModel} onChange={(e) => setEnqueueModel(e.target.value)}
+            className="h-7 text-xs w-full bg-transparent border border-border rounded-md px-2 mt-1">
+            <option value="default">Défaut</option>
+            <option value="claude-sonnet">Claude Sonnet</option>
+            <option value="glm-5.1">GLM-5.1</option>
+            <option value="gpt-4o">GPT-4o</option>
+            <option value="deepseek">DeepSeek</option>
+          </select>
+        </div>
+      </div>
+      <div className="bg-muted/30 border border-border rounded-md p-2 max-h-[80px] overflow-y-auto">
+        <pre className="text-[10px] text-muted-foreground whitespace-pre-wrap">{preview.slice(0, 300)}{preview.length > 300 ? "…" : ""}</pre>
+      </div>
+      <div className="flex gap-2">
+        <Button size="sm" className="text-xs h-8 bg-ax-green/20 text-ax-green border border-ax-green/30 hover:bg-ax-green/30"
+          onClick={handleEnqueue} disabled={enqueueing || !preview.trim()}>
+          {enqueueing ? "⏳ Envoi…" : "🚀 Enqueue"}
+        </Button>
+        <Button variant="ghost" size="sm" className="text-xs h-8" onClick={() => setShowEnqueue(false)}>
+          ✕ Annuler
+        </Button>
+      </div>
+    </CardContent>
+  </Card>
+  )}
       </DialogContent>
     </Dialog>
   );

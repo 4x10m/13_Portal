@@ -164,3 +164,21 @@ export interface CreateLinkInput {
   url: string;
   label: string;
 }
+
+// ── Prompt Queue ──
+
+export type PromptQueueStatus = "pending" | "running" | "done" | "failed" | "cancelled";
+
+export interface PromptQueueItem {
+  id: string;
+  prompt: string;
+  project_id: string | null;
+  project_name: string | null;
+  target_cwd: string | null;
+  target_model: string;
+  status: PromptQueueStatus;
+  result: string | null;
+  created_at: string;
+  started_at: string | null;
+  finished_at: string | null;
+}
