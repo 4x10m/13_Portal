@@ -13,6 +13,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
+import { Header } from "@/components/header";
+import type { StatusChip } from "@/components/header";
 import { ProjectDetailDialog } from "@/components/project-detail-dialog";
 import { NewProjectDialog } from "@/components/new-project-dialog";
 import { OpsPanel } from "@/components/panels/ops-panel";
@@ -594,110 +596,60 @@ export default function ProjetsPage() {
   const statsByStatus = (status: ProjectStatus) => projects.filter((p) => p.status === status).length;
 
   return (
-    <div className="space-y-4 p-6 pb-24">
-      {/* ── Topbar: brand gradient + external links ── */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-default">
-          <h1 className="text-lg font-bold tracking-tight">
-            <span className="bg-gradient-to-r from-[#00d9ff] to-[#00ff88] bg-clip-text text-transparent">Axiiom</span><span className="text-[#e0e8f0]">Lab</span>
-          </h1>
-          <span className="text-[10px] text-[#8899b3] uppercase tracking-widest">Projets</span>
+  <div className="space-y-4 p-6 pb-24">
+  {/* ── Rich Header ── */}
+  <Header
+    subtitle="Projets"
+    totalCount={projects.length}
+    statusChips={(Object.entries(STATUS_CONFIG) as [ProjectStatus, typeof STATUS_CONFIG[ProjectStatus]][]).map(
+      ([status, cfg]) => ({ status: cfg.label, count: statsByStatus(status), color: cfg.color, bg: cfg.bgColor })
+    ) as StatusChip[]}
+    searchValue={searchQuery}
+    onSearchChange={setSearchQuery}
+    actions={
+      <>
+        {/* Sort */}
+        <select
+          value={`${sortBy}:${sortDir}`}
+          onChange={(e) => {
+            const [by, dir] = e.target.value.split(":") as [typeof sortBy, typeof sortDir];
+            setSortBy(by); setSortDir(dir);
+          }}
+          className="h-7 text-xs bg-transparent border border-[#2d3f5e] rounded-md px-2 text-[#8899b3] focus:outline-none focus:ring-1 focus:ring-[#00d9ff]"
+        >
+          <option value="updated_at:desc">Récents</option>
+          <option value="updated_at:asc">Anciens</option>
+          <option value="name:asc">Nom A-Z</option>
+          <option value="name:desc">Nom Z-A</option>
+          <option value="priority:asc">Priorité ↗</option>
+          <option value="priority:desc">Priorité ↘</option>
+          <option value="milestone_count:desc">+ Jalons</option>
+          <option value="milestone_count:asc">- Jalons</option>
+        </select>
+
+        {/* View toggle */}
+        <div className="flex rounded-md border border-[#2d3f5e] overflow-hidden">
+          <button onClick={() => setViewMode("grid")} className={`px-3 py-1.5 text-xs transition-colors ${viewMode === "grid" ? "bg-[#243352] text-[#00d9ff]" : "text-[#8899b3] hover:text-[#e0e8f0]"}`}>
+            ▦ Grille
+          </button>
+          <button onClick={() => setViewMode("kanban")} className={`px-3 py-1.5 text-xs transition-colors ${viewMode === "kanban" ? "bg-[#243352] text-[#00d9ff]" : "text-[#8899b3] hover:text-[#e0e8f0]"}`}>
+            ☷ Kanban
+          </button>
+          <button onClick={() => setViewMode("timeline")} className={`px-3 py-1.5 text-xs transition-colors ${viewMode === "timeline" ? "bg-[#243352] text-[#00d9ff]" : "text-[#8899b3] hover:text-[#e0e8f0]"}`}>
+            ⟿ Timeline
+          </button>
         </div>
-        <div className="flex items-center gap-3">
-          {[
-            { href: "https://homepage.axiiomlab.ovh", label: "Homepage" },
-            { href: "https://portal.axiiomlab.ovh", label: "Portal" },
-            { href: "https://grafana.axiiomlab.ovh", label: "Grafana" },
-            { href: "https://portainer.axiiomlab.ovh", label: "Portainer" },
-            { href: "https://forgejo.axiiomlab.ovh", label: "Forgejo" },
-            { href: "https://minio.axiiomlab.ovh", label: "MinIO" },
-          ].map((link) => (
-            <a
-              key={link.label}
-              href={link.href}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-[11px] text-[#8899b3] hover:text-[#00d9ff] transition-colors"
-            >
-              {link.label} ↗
-            </a>
-          ))}
-        </div>
-      </div>
+        <NewProjectDialog onCreated={fetchProjects} />
+      </>
+    }
+  />
 
-      {/* ── KPI Ops Bandeau ── */}
-      <OpsKPIBandeau ops={ops} opsLoading={opsLoading} onKpiClick={handleKpiClick} />
+  {/* ── KPI Ops Bandeau ── */}
+  <OpsKPIBandeau ops={ops} opsLoading={opsLoading} onKpiClick={handleKpiClick} />
 
-      {/* ── Toolbar: status counts + sort + view + new (no inline panel buttons) ── */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div className="flex items-center gap-3">
-          {/* Project status counts */}
-          <div className="flex items-center gap-2">
-            {(Object.entries(STATUS_CONFIG) as [ProjectStatus, typeof STATUS_CONFIG[ProjectStatus]][]).map(
-              ([status, cfg]) => (
-                <div key={status} className={`flex items-center gap-1.5 px-2 py-1 rounded-md ${cfg.bgColor}`}>
-                  <span className={`text-sm font-bold ${cfg.color}`}>{statsByStatus(status)}</span>
-                  <span className="text-[10px] text-[#8899b3]">{cfg.label}</span>
-                </div>
-              )
-            )}
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          {/* Sort */}
-          <select
-            value={`${sortBy}:${sortDir}`}
-            onChange={(e) => {
-              const [by, dir] = e.target.value.split(":") as [typeof sortBy, typeof sortDir];
-              setSortBy(by);
-              setSortDir(dir);
-            }}
-            className="h-7 text-xs bg-transparent border border-[#2d3f5e] rounded-md px-2 text-[#8899b3] focus:outline-none focus:ring-1 focus:ring-[#00d9ff]"
-          >
-            <option value="updated_at:desc">Récents</option>
-            <option value="updated_at:asc">Anciens</option>
-            <option value="name:asc">Nom A-Z</option>
-            <option value="name:desc">Nom Z-A</option>
-            <option value="priority:asc">Priorité ↗</option>
-            <option value="priority:desc">Priorité ↘</option>
-            <option value="milestone_count:desc">+ Jalons</option>
-            <option value="milestone_count:asc">- Jalons</option>
-          </select>
-
-          {/* View toggle */}
-          <div className="flex rounded-md border border-[#2d3f5e] overflow-hidden">
-            <button onClick={() => setViewMode("grid")} className={`px-3 py-1.5 text-xs transition-colors ${viewMode === "grid" ? "bg-[#243352] text-[#00d9ff]" : "text-[#8899b3] hover:text-[#e0e8f0]"}`}>
-              ▦ Grille
-            </button>
-            <button onClick={() => setViewMode("kanban")} className={`px-3 py-1.5 text-xs transition-colors ${viewMode === "kanban" ? "bg-[#243352] text-[#00d9ff]" : "text-[#8899b3] hover:text-[#e0e8f0]"}`}>
-              ☷ Kanban
-            </button>
-            <button onClick={() => setViewMode("timeline")} className={`px-3 py-1.5 text-xs transition-colors ${viewMode === "timeline" ? "bg-[#243352] text-[#00d9ff]" : "text-[#8899b3] hover:text-[#e0e8f0]"}`}>
-              ⟿ Timeline
-            </button>
-          </div>
-          <NewProjectDialog onCreated={fetchProjects} />
-        </div>
-      </div>
-
-      {/* ── Filters ── */}
-      <div className="space-y-3">
-        <div className="flex items-center gap-3">
-          <Input
-            placeholder="Rechercher un projet..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="max-w-xs h-8 text-sm bg-[#1a2744] border-[#2d3f5e] text-[#e0e8f0] placeholder:text-[#8899b3] focus:ring-[#00d9ff]"
-          />
-          {searchQuery && (
-            <button onClick={() => setSearchQuery("")} className="text-xs text-[#8899b3] hover:text-[#00d9ff] transition-colors">
-              ✕ Effacer
-            </button>
-          )}
-        </div>
-
-        <Tabs value={categoryFilter} onValueChange={(v) => setCategoryFilter(v as ProjectCategory | "all")}>
+  {/* ── Filters ── */}
+  <div className="space-y-3">
+  <Tabs value={categoryFilter} onValueChange={(v) => setCategoryFilter(v as ProjectCategory | "all")}>
           <TabsList>
             {CATEGORIES.map((cat) => (<TabsTrigger key={cat.value} value={cat.value}>{cat.label}</TabsTrigger>))}
           </TabsList>

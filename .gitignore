@@ -24,3 +24,8 @@ __pycache__/
 
 # Build artifacts
 dashboard/tsconfig.tsbuildinfo
+
+# Session experiments (not part of dashboard)
+session-cli/
+session-dashboard/
+session-manager-tui/

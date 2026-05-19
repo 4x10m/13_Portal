@@ -33,7 +33,8 @@ export function parseProject(row: ProjectDB): Project {
       opencode_sessions = raw;
     }
   } catch { /* */ }
-  return { ...row, docker_containers, domains, databases, opencode_sessions };
+  const { docker_containers: _dc, domains: _dm, databases: _db, opencode_sessions: _oc, ...rest } = row;
+  return { ...rest, docker_containers, domains, databases, opencode_sessions };
 }
 
 // ── Schema ──
@@ -47,6 +48,7 @@ CREATE TABLE IF NOT EXISTS projects (
   priority TEXT NOT NULL DEFAULT 'medium',
   category TEXT DEFAULT 'general',
   assigned_agent TEXT DEFAULT '',
+  repo_path TEXT DEFAULT '',
   docker_containers TEXT DEFAULT '[]',
   domains TEXT DEFAULT '[]',
   databases TEXT DEFAULT '[]',
@@ -94,6 +96,7 @@ CREATE TABLE IF NOT EXISTS prompt_queue (
   project_name TEXT,
   target_cwd TEXT,
   target_model TEXT NOT NULL DEFAULT 'default',
+  harness_type TEXT NOT NULL DEFAULT 'opencode',
   status TEXT NOT NULL DEFAULT 'pending',
   result TEXT,
   created_at TEXT DEFAULT (datetime('now')),
@@ -121,6 +124,16 @@ function migrate(database: Database.Database) {
   }
   if (!colNames.has("opencode_sessions")) {
     database.exec("ALTER TABLE projects ADD COLUMN opencode_sessions TEXT DEFAULT '[]'");
+  }
+  if (!colNames.has("repo_path")) {
+    database.exec("ALTER TABLE projects ADD COLUMN repo_path TEXT DEFAULT ''");
+  }
+
+  // Migrate prompt_queue — add harness_type if missing
+  const pqColumns = database.prepare("PRAGMA table_info(prompt_queue)").all() as { name: string }[];
+  const pqColNames = new Set(pqColumns.map((c) => c.name));
+  if (!pqColNames.has("harness_type")) {
+    database.exec("ALTER TABLE prompt_queue ADD COLUMN harness_type TEXT NOT NULL DEFAULT 'opencode'");
   }
 }
 

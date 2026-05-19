@@ -31,21 +31,24 @@ export async function POST(req: NextRequest) {
   try {
     const db = getDb();
     const body = await req.json();
-    const { prompt, project_id, project_name, target_cwd, target_model } = body;
+    const { prompt, project_id, project_name, target_cwd, target_model, harness_type } = body;
 
     if (!prompt?.trim()) {
       return NextResponse.json({ error: "Prompt requis" }, { status: 400 });
     }
 
+    const validHarness = ["opencode", "codex", "claude-code", "other"];
+    const harness = validHarness.includes(harness_type) ? harness_type : "opencode";
+
     const id = randomUUID();
     const now = new Date().toISOString();
 
     db.prepare(`
-      INSERT INTO prompt_queue (id, prompt, project_id, project_name, target_cwd, target_model, status, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, 'pending', ?)
-    `).run(id, prompt.trim(), project_id || null, project_name || null, target_cwd || null, target_model || "default", now);
+      INSERT INTO prompt_queue (id, prompt, project_id, project_name, target_cwd, target_model, harness_type, status, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', ?)
+    `).run(id, prompt.trim(), project_id || null, project_name || null, target_cwd || null, target_model || "default", harness, now);
 
-    return NextResponse.json({ success: true, id, status: "pending" });
+    return NextResponse.json({ success: true, id, status: "pending", harness_type: harness });
   } catch (error) {
     return NextResponse.json({ error: "Erreur enqueue", details: String(error) }, { status: 500 });
   }

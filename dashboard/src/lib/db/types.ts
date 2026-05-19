@@ -29,10 +29,11 @@ export interface ProjectDB {
   priority: ProjectPriority;
   category: ProjectCategory;
   assigned_agent: string;
-  docker_containers: string;  // JSON
-  domains: string;            // JSON
-  databases: string;          // JSON
-  opencode_sessions: string;  // JSON
+  repo_path: string;
+  docker_containers: string; // JSON
+  domains: string; // JSON
+  databases: string; // JSON
+  opencode_sessions: string; // JSON
   created_at: string;
   updated_at: string;
 }
@@ -45,6 +46,7 @@ export interface Project {
   priority: ProjectPriority;
   category: ProjectCategory;
   assigned_agent: string;
+  repo_path: string;
   docker_containers: string[];
   domains: string[];
   databases: { type: string; name: string }[];
@@ -107,6 +109,7 @@ export interface CreateProjectInput {
   priority?: ProjectPriority;
   category?: ProjectCategory;
   assigned_agent?: string;
+  repo_path?: string;
   docker_containers?: string[];
   domains?: string[];
   databases?: { type: string; name: string }[];
@@ -120,6 +123,7 @@ export interface UpdateProjectInput {
   priority?: ProjectPriority;
   category?: ProjectCategory;
   assigned_agent?: string;
+  repo_path?: string;
   docker_containers?: string[];
   domains?: string[];
   databases?: { type: string; name: string }[];

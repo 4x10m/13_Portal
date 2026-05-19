@@ -63,17 +63,18 @@ export async function PUT(
     const status = VALID_STATUSES.includes(body.status as any) ? body.status! : existing.status;
     const priority = VALID_PRIORITIES.includes(body.priority as any) ? body.priority! : existing.priority;
     const category = VALID_CATEGORIES.includes(body.category as any) ? body.category! : existing.category;
-    const assigned_agent = body.assigned_agent !== undefined ? body.assigned_agent.trim() : existing.assigned_agent;
-    const docker_containers = JSON.stringify(body.docker_containers !== undefined ? body.docker_containers : existing.docker_containers);
+  const assigned_agent = body.assigned_agent !== undefined ? body.assigned_agent.trim() : existing.assigned_agent;
+  const repo_path = body.repo_path !== undefined ? body.repo_path.trim() : existing.repo_path;
+  const docker_containers = JSON.stringify(body.docker_containers !== undefined ? body.docker_containers : existing.docker_containers);
     const domains = JSON.stringify(body.domains !== undefined ? body.domains : existing.domains);
     const databases = JSON.stringify(body.databases !== undefined ? body.databases : existing.databases);
     const opencode_sessions = JSON.stringify(body.opencode_sessions !== undefined ? body.opencode_sessions : existing.opencode_sessions);
 
     const now = new Date().toISOString();
-    db.prepare(`
-      UPDATE projects SET name = ?, description = ?, status = ?, priority = ?, category = ?, assigned_agent = ?, docker_containers = ?, domains = ?, databases = ?, opencode_sessions = ?, updated_at = ?
-      WHERE id = ?
-    `).run(name, description, status, priority, category, assigned_agent, docker_containers, domains, databases, opencode_sessions, now, id);
+  db.prepare(`
+  UPDATE projects SET name = ?, description = ?, status = ?, priority = ?, category = ?, assigned_agent = ?, repo_path = ?, docker_containers = ?, domains = ?, databases = ?, opencode_sessions = ?, updated_at = ?
+  WHERE id = ?
+  `).run(name, description, status, priority, category, assigned_agent, repo_path, docker_containers, domains, databases, opencode_sessions, now, id);
 
     const row = db.prepare("SELECT * FROM projects WHERE id = ?").get(id) as ProjectDB;
     return NextResponse.json(parseProject(row));

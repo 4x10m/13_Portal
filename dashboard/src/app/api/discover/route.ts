@@ -44,6 +44,39 @@ const CONTAINER_NAME_MAP: [RegExp, string][] = [
   [/tor-nginx/i, "Tor — Onion Proxy"],
 ];
 
+// ── Repo path for new projects (relative to CODEBASE_DIR) ──
+const PROJECT_REPO_PATHS: Record<string, string> = {
+  "Portal Dashboard Hub": "1_infra/13_Portal",
+  "Cloud Manager — CLI Unifié": "1_infra/1_cloud_manager",
+  "Proxy Auth — Caddy + Authelia": "1_infra/10_Proxy",
+  "AI Stack — Forgejo + Woodpecker + Agents": "2_ai-stack",
+  "Monitoring — Prometheus + Grafana + Loki": "1_infra/12_Monitoring",
+  "MinIO Backup — Tour 8To": "1_infra/21_Tour",
+  "Tailscale — Mesh VPN": "1_infra/25_Tailscale",
+  "Watchdog — Heartbeat OVH": "1_infra/remote-watchdog",
+  "Security Audit — Hardening": "1_infra/security-audit",
+  "Optimization — Cleanup Dedi": "1_infra/optimization",
+  "Infra — Ops OVH": "1_infra",
+  "Appwrite — Backend-as-a-Service": "3_perso/5_appwrite",
+  "Socialite — App Sociale": "3_perso/7_socialite",
+  "Booker — Réservation": "3_perso/4_booker",
+  "Prompt Builder — Éditeur de Prompts": "2_ai-stack/6_tools/1_router",
+  "Hyperactive — Agent Autonome": "2_ai-stack/7_roles/00_v6",
+  "Unified Agent — Assistant IA": "2_ai-stack/7_roles/00_v3",
+  "Tor — Onion Proxy": "3_perso/tor-onion",
+  "RAGFlow — Pipeline Documentaire": "2_ai-stack/6_tools/3_rag",
+  "Soron — Backend API": "3_perso/1_T2R",
+  "Open WebUI — Interface LLM": "2_ai-stack/4_frameworks/ai-test-lab",
+  "WG-Easy — VPN WireGuard": "1_infra/wg-easy",
+  "Meilisearch — Moteur de Recherche": "2_ai-stack/6_tools/1_router",
+  "Docker Registry — Images Privées": "1_infra/registry",
+  "T2R — Delivery API": "3_perso/1_T2R",
+  "Groudon — Web Crawler": "3_perso/3_Groudon",
+  "Meta Harness — LLM Benchmarks": "2_ai-stack/6_tools/9_meta-harness",
+  "Memory — Agent Memory Store": "2_ai-stack/6_tools/2_memory",
+  "ExoCog — IA Cognitive": "Working/50_4x10m/33_ExoCog",
+};
+
 // ── Category for new projects ──
 const PROJECT_CATEGORIES: Record<string, string> = {
   "Appwrite — Backend-as-a-Service": "ai",
@@ -412,88 +445,96 @@ export async function GET() {
     const allDiscovered = new Set([...Object.keys(projectContainers), ...Object.keys(projectSessions)]);
     for (const projectName of allDiscovered) {
       if (!existingMap.has(projectName)) {
-        const id = randomUUID();
-        const now = new Date().toISOString();
-        const category = PROJECT_CATEGORIES[projectName] || "general";
-        const desc = PROJECT_DESCRIPTIONS[projectName] || "";
-        db.prepare(`
-          INSERT INTO projects (id, name, description, status, priority, category, assigned_agent, docker_containers, domains, databases, opencode_sessions, created_at, updated_at)
-          VALUES (?, ?, ?, 'in-progress', 'medium', ?, '', '[]', '[]', '[]', '[]', ?, ?)
-        `).run(id, projectName, desc, category, now, now);
+    const id = randomUUID();
+    const now = new Date().toISOString();
+    const category = PROJECT_CATEGORIES[projectName] || "general";
+    const desc = PROJECT_DESCRIPTIONS[projectName] || "";
+    const repoPath = PROJECT_REPO_PATHS[projectName] || "";
+    db.prepare(`
+      INSERT INTO projects (id, name, description, status, priority, category, assigned_agent, repo_path, docker_containers, domains, databases, opencode_sessions, created_at, updated_at)
+      VALUES (?, ?, ?, 'in-progress', 'medium', ?, '', ?, '[]', '[]', '[]', '[]', ?, ?)
+    `).run(id, projectName, desc, category, repoPath, now, now);
         existingMap.set(projectName, id);
       }
     }
 
-    // Update resource fields for all projects
-    let updatedCount = 0;
-    for (const [projectName, cList] of Object.entries(projectContainers)) {
-      const projectId = existingMap.get(projectName);
-      if (!projectId) continue;
+  // Backfill repo_path for existing projects that don't have one yet
+  for (const [projectName, repoPath] of Object.entries(PROJECT_REPO_PATHS)) {
+    const projectId = existingMap.get(projectName);
+    if (!projectId) continue;
+    db.prepare(`UPDATE projects SET repo_path = ? WHERE id = ? AND (repo_path IS NULL OR repo_path = '')`).run(repoPath, projectId);
+  }
 
-      const domains = PROJECT_DOMAINS[projectName] || [];
-      const databases = detectDatabases(cList);
-      const sessions = (projectSessions[projectName] || []).map((s) => ({
-        id: s.id,
-        title: s.title,
-        slug: s.slug,
-        cwd: s.cwd,
-        flavor: s.flavor,
-        model: s.model,
-        message_count: s.message_count,
-        is_active: s.is_active,
-        is_recent: s.is_recent,
-        is_pinned: s.is_pinned,
-        time_created: s.time_created,
-        time_updated: s.time_updated,
-      }));
+  // Update resource fields for all projects
+  let updatedCount = 0;
+  for (const [projectName, cList] of Object.entries(projectContainers)) {
+    const projectId = existingMap.get(projectName);
+    if (!projectId) continue;
 
-      db.prepare(`
-        UPDATE projects
-        SET docker_containers = ?, domains = ?, databases = ?, opencode_sessions = ?, updated_at = ?
-        WHERE id = ?
-      `).run(
-        JSON.stringify(cList),
-        JSON.stringify(domains),
-        JSON.stringify(databases),
-        JSON.stringify(sessions),
-        new Date().toISOString(),
-        projectId
-      );
-      updatedCount++;
-    }
+    const domains = PROJECT_DOMAINS[projectName] || [];
+    const databases = detectDatabases(cList);
+    const sessions = (projectSessions[projectName] || []).map((s) => ({
+      id: s.id,
+      title: s.title,
+      slug: s.slug,
+      cwd: s.cwd,
+      flavor: s.flavor,
+      model: s.model,
+      message_count: s.message_count,
+      is_active: s.is_active,
+      is_recent: s.is_recent,
+      is_pinned: s.is_pinned,
+      time_created: s.time_created,
+      time_updated: s.time_updated,
+    }));
 
-    // Also update sessions for projects that have sessions but no containers
-    for (const [projectName, sessions] of Object.entries(projectSessions)) {
-      if (projectContainers[projectName]) continue; // already updated above
-      const projectId = existingMap.get(projectName);
-      if (!projectId) continue;
+    db.prepare(`
+      UPDATE projects
+      SET docker_containers = ?, domains = ?, databases = ?, opencode_sessions = ?, updated_at = ?
+      WHERE id = ?
+    `).run(
+      JSON.stringify(cList),
+      JSON.stringify(domains),
+      JSON.stringify(databases),
+      JSON.stringify(sessions),
+      new Date().toISOString(),
+      projectId
+    );
+    updatedCount++;
+  }
 
-      const sessionData = sessions.map((s) => ({
-        id: s.id,
-        title: s.title,
-        slug: s.slug,
-        cwd: s.cwd,
-        flavor: s.flavor,
-        model: s.model,
-        message_count: s.message_count,
-        is_active: s.is_active,
-        is_recent: s.is_recent,
-        is_pinned: s.is_pinned,
-        time_created: s.time_created,
-        time_updated: s.time_updated,
-      }));
+  // Also update sessions for projects that have sessions but no containers
+  for (const [projectName, sessions] of Object.entries(projectSessions)) {
+    if (projectContainers[projectName]) continue; // already updated above
+    const projectId = existingMap.get(projectName);
+    if (!projectId) continue;
 
-      db.prepare(`
-        UPDATE projects
-        SET opencode_sessions = ?, updated_at = ?
-        WHERE id = ?
-      `).run(
-        JSON.stringify(sessionData),
-        new Date().toISOString(),
-        projectId
-      );
-      updatedCount++;
-    }
+    const sessionData = sessions.map((s) => ({
+      id: s.id,
+      title: s.title,
+      slug: s.slug,
+      cwd: s.cwd,
+      flavor: s.flavor,
+      model: s.model,
+      message_count: s.message_count,
+      is_active: s.is_active,
+      is_recent: s.is_recent,
+      is_pinned: s.is_pinned,
+      time_created: s.time_created,
+      time_updated: s.time_updated,
+    }));
+
+    db.prepare(`
+      UPDATE projects
+      SET opencode_sessions = ?, updated_at = ?
+      WHERE id = ?
+    `).run(
+      JSON.stringify(sessionData),
+      new Date().toISOString(),
+      projectId
+    );
+    updatedCount++;
+  }
 
     // Return summary
     const projects = db.prepare("SELECT * FROM projects ORDER BY name").all() as ProjectDB[];

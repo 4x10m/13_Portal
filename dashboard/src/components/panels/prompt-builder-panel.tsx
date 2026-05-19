@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -39,8 +39,25 @@ interface Analysis {
   quality: { score: number; level: string; issues: string[]; strengths: string[] };
 }
 
+interface ProjectOption {
+  id: string;
+  name: string;
+  repo_path: string;
+  cwds: string[];
+}
+
 type Format = "text" | "markdown" | "json" | "code" | "list";
 type BuilderView = "build" | "preview" | "history";
+type HarnessType = "opencode" | "codex" | "claude-code" | "other";
+
+// ── Harness config ──
+
+const HARNESS_OPTIONS: { value: HarnessType; label: string; icon: string; desc: string }[] = [
+  { value: "opencode", label: "OpenCode", icon: "⚡", desc: "OpenCode CLI — sessions SQLite" },
+  { value: "codex", label: "Codex", icon: "🔮", desc: "OpenAI Codex CLI" },
+  { value: "claude-code", label: "Claude Code", icon: "🤖", desc: "Anthropic Claude Code CLI" },
+  { value: "other", label: "Autre", icon: "🔧", desc: "Autre harnais d'exécution" },
+];
 
 // ── Default templates ──
 
@@ -166,6 +183,12 @@ export function PromptBuilderPanel({ open, onOpenChange }: { open: boolean; onOp
   const [enqueueProject, setEnqueueProject] = useState("");
   const [enqueueCwd, setEnqueueCwd] = useState("");
   const [enqueueModel, setEnqueueModel] = useState("default");
+  const [harnessType, setHarnessType] = useState<HarnessType>("opencode");
+  const [projectSearch, setProjectSearch] = useState("");
+  const [projectOptions, setProjectOptions] = useState<ProjectOption[]>([]);
+  const [selectedProject, setSelectedProject] = useState<ProjectOption | null>(null);
+  const [showProjectDropdown, setShowProjectDropdown] = useState(false);
+  const projectDropdownRef = useRef<HTMLDivElement>(null);
 
   // Computed preview
   const preview = useMemo(() => generatePrompt({ role, task, context, constraints, format, formatDetails, examples }),
@@ -202,7 +225,29 @@ export function PromptBuilderPanel({ open, onOpenChange }: { open: boolean; onOp
     fetch("/api/prompt-builder").then(r => r.json()).then(d => {
       setBackendStatus(d.backend === "online" ? "online" : "offline");
     }).catch(() => setBackendStatus("offline"));
+
+    // Load project options for combobox
+    fetch("/api/roadmap/projects").then(r => r.json()).then((projects: any[]) => {
+      const opts: ProjectOption[] = projects.map((p: any) => ({
+        id: p.id as string,
+        name: p.name as string,
+        repo_path: (p.repo_path as string) || "",
+        cwds: [...new Set((p.opencode_sessions || []).map((s: any) => s.cwd as string))] as string[],
+      }));
+      setProjectOptions(opts);
+    }).catch(() => setProjectOptions([]));
   }, [open]);
+
+  // Close project dropdown on outside click
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (projectDropdownRef.current && !projectDropdownRef.current.contains(e.target as Node)) {
+        setShowProjectDropdown(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
 
   // Save to localStorage on changes
   useEffect(() => {
@@ -343,14 +388,16 @@ export function PromptBuilderPanel({ open, onOpenChange }: { open: boolean; onOp
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           prompt: preview,
-          project_name: enqueueProject || null,
+          project_id: selectedProject?.id || null,
+          project_name: selectedProject?.name || enqueueProject || null,
           target_cwd: enqueueCwd || null,
           target_model: enqueueModel || "default",
+          harness_type: harnessType,
         }),
       });
       const data = await res.json();
       if (data.success) {
-        toast.success(`Prompt enqueued (id: ${data.id?.slice(0, 8)}…)`);
+        toast.success(`Prompt enqueued → ${HARNESS_OPTIONS.find(h => h.value === harnessType)?.label || harnessType} (id: ${data.id?.slice(0, 8)}…)`);
         setShowEnqueue(false);
       } else {
         toast.error("Erreur enqueue: " + (data.error || "inconnue"));
@@ -360,7 +407,7 @@ export function PromptBuilderPanel({ open, onOpenChange }: { open: boolean; onOp
     } finally {
       setEnqueueing(false);
     }
-  }, [preview, enqueueProject, enqueueCwd, enqueueModel]);
+  }, [preview, enqueueProject, enqueueCwd, enqueueModel, harnessType, selectedProject]);
 
   const loadFromHistory = useCallback((item: HistoryItem) => {
     navigator.clipboard.writeText(item.fullPrompt);
@@ -380,16 +427,16 @@ export function PromptBuilderPanel({ open, onOpenChange }: { open: boolean; onOp
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[95vw] max-h-[92vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            🛠️ Prompt Builder Pro
-            <Badge variant="outline" className="text-[9px] px-1.5 py-0">
-              {backendStatus === "online" ? "🟢 API" : "🟡 Local"}
-            </Badge>
-          </DialogTitle>
-          <DialogDescription>Construisez des prompts structurés et optimisés pour vos interactions IA</DialogDescription>
-        </DialogHeader>
+    <DialogContent className="sm:max-w-[95vw] max-h-[92vh] overflow-y-auto">
+      <DialogHeader>
+        <DialogTitle className="flex items-center gap-2">
+          🛠️ Prompt & Task Builder
+          <Badge variant="outline" className="text-[9px] px-1.5 py-0">
+            {backendStatus === "online" ? "🟢 API" : "🟡 Local"}
+          </Badge>
+        </DialogTitle>
+        <DialogDescription>Construisez des prompts structurés et envoyez-les à n'importe quel harnais d'exécution</DialogDescription>
+      </DialogHeader>
 
         {/* ── View switcher + actions ── */}
         <div className="flex items-center gap-2 flex-wrap border-b border-border pb-2">
@@ -743,53 +790,150 @@ export function PromptBuilderPanel({ open, onOpenChange }: { open: boolean; onOp
   </div>
   )}
 
-  {/* ══════ ENQUEUE PANEL ══════ */}
-  {showEnqueue && (
-  <Card className="border-ax-green/30">
-    <CardHeader className="pb-2">
-      <CardTitle className="text-sm flex items-center gap-2">
-        🚀 Enqueue — Envoyer à un agent OpenCode
-      </CardTitle>
-    </CardHeader>
-    <CardContent className="space-y-3">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-        <div>
-          <label className="text-[11px] text-muted-foreground font-medium">Projet cible</label>
-          <Input value={enqueueProject} onChange={(e) => setEnqueueProject(e.target.value)}
-            placeholder="Ex: AI Test Lab" className="h-7 text-xs mt-1" />
-        </div>
-        <div>
-          <label className="text-[11px] text-muted-foreground font-medium">CWD (répertoire de travail)</label>
-          <Input value={enqueueCwd} onChange={(e) => setEnqueueCwd(e.target.value)}
-            placeholder="Ex: /home/debian/Codebase/2_ai-stack" className="h-7 text-xs mt-1" />
-        </div>
-        <div>
-          <label className="text-[11px] text-muted-foreground font-medium">Modèle</label>
-          <select value={enqueueModel} onChange={(e) => setEnqueueModel(e.target.value)}
-            className="h-7 text-xs w-full bg-transparent border border-border rounded-md px-2 mt-1">
-            <option value="default">Défaut</option>
-            <option value="claude-sonnet">Claude Sonnet</option>
-            <option value="glm-5.1">GLM-5.1</option>
-            <option value="gpt-4o">GPT-4o</option>
-            <option value="deepseek">DeepSeek</option>
-          </select>
-        </div>
-      </div>
-      <div className="bg-muted/30 border border-border rounded-md p-2 max-h-[80px] overflow-y-auto">
-        <pre className="text-[10px] text-muted-foreground whitespace-pre-wrap">{preview.slice(0, 300)}{preview.length > 300 ? "…" : ""}</pre>
-      </div>
-      <div className="flex gap-2">
-        <Button size="sm" className="text-xs h-8 bg-ax-green/20 text-ax-green border border-ax-green/30 hover:bg-ax-green/30"
-          onClick={handleEnqueue} disabled={enqueueing || !preview.trim()}>
-          {enqueueing ? "⏳ Envoi…" : "🚀 Enqueue"}
-        </Button>
-        <Button variant="ghost" size="sm" className="text-xs h-8" onClick={() => setShowEnqueue(false)}>
-          ✕ Annuler
-        </Button>
-      </div>
-    </CardContent>
-  </Card>
-  )}
+      {/* ══════ ENQUEUE PANEL ══════ */}
+      {showEnqueue && (
+        <Card className="border-[#00ff88]/30 bg-[#00ff88]/5">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm flex items-center gap-2">
+              🚀 Enqueue — Envoyer à un harnais d'exécution
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {/* Harness type selector */}
+            <div>
+              <label className="text-[11px] text-muted-foreground font-medium mb-1.5 block">Harnais cible</label>
+              <div className="flex gap-1.5 flex-wrap">
+                {HARNESS_OPTIONS.map((h) => (
+                  <button
+                    key={h.value}
+                    onClick={() => setHarnessType(h.value)}
+                    className={`px-3 py-1.5 rounded-md text-xs border transition-colors flex items-center gap-1.5 ${
+                      harnessType === h.value
+                        ? "border-[#00d9ff] bg-[#00d9ff]/10 text-[#00d9ff] font-medium"
+                        : "border-[#2d3f5e] text-[#8899b3] hover:border-[#00d9ff]/30 hover:text-[#e0e8f0]"
+                    }`}
+                    title={h.desc}
+                  >
+                    <span>{h.icon}</span>
+                    {h.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Project combobox */}
+            <div ref={projectDropdownRef} className="relative">
+              <label className="text-[11px] text-muted-foreground font-medium mb-1.5 block">Projet cible</label>
+              <Input
+                value={projectSearch || selectedProject?.name || ""}
+                onChange={(e) => {
+                  setProjectSearch(e.target.value);
+                  setSelectedProject(null);
+                  setShowProjectDropdown(true);
+                }}
+                onFocus={() => setShowProjectDropdown(true)}
+                placeholder="Rechercher un projet…"
+                className="h-7 text-xs"
+              />
+              {showProjectDropdown && (
+                <div className="absolute z-50 w-full mt-1 bg-[#1a2744] border border-[#2d3f5e] rounded-md shadow-xl max-h-[200px] overflow-y-auto">
+                  {projectOptions
+                    .filter((p) => !projectSearch || p.name.toLowerCase().includes(projectSearch.toLowerCase()))
+                    .slice(0, 20)
+                    .map((p) => (
+                      <button
+                        key={p.id}
+                        className="w-full text-left px-3 py-2 text-xs hover:bg-[#243352] transition-colors flex items-center justify-between gap-2"
+                        onClick={() => {
+                          setSelectedProject(p);
+                          setProjectSearch("");
+                          setShowProjectDropdown(false);
+                          // Auto-fill CWD from project sessions
+                          if (p.cwds.length > 0) {
+                            setEnqueueCwd(p.cwds[0]);
+                          } else if (p.repo_path) {
+                            setEnqueueCwd(`/home/debian/Codebase/${p.repo_path}`);
+                          }
+                          setEnqueueProject(p.name);
+                        }}
+                      >
+                        <span className="truncate flex-1">{p.name}</span>
+                        {p.cwds.length > 0 && (
+                          <Badge variant="outline" className="text-[9px] shrink-0">{p.cwds.length} CWD</Badge>
+                        )}
+                      </button>
+                    ))}
+                  {projectOptions.filter((p) => !projectSearch || p.name.toLowerCase().includes(projectSearch.toLowerCase())).length === 0 && (
+                    <p className="text-[11px] text-muted-foreground text-center py-2">Aucun projet trouvé</p>
+                  )}
+                </div>
+              )}
+              {selectedProject && (
+                <div className="flex items-center gap-2 mt-1.5">
+                  <Badge variant="outline" className="text-[10px] border-[#00d9ff]/30 text-[#00d9ff]">
+                    ✓ {selectedProject.name}
+                  </Badge>
+                  {selectedProject.cwds.length > 0 && (
+                    <div className="flex gap-1 flex-wrap">
+                      {selectedProject.cwds.slice(0, 3).map((c) => (
+                        <button
+                          key={c}
+                          onClick={() => setEnqueueCwd(c)}
+                          className={`text-[9px] px-1.5 py-0.5 rounded border font-mono truncate max-w-[200px] transition-colors ${
+                            enqueueCwd === c
+                              ? "border-[#00ff88]/50 bg-[#00ff88]/10 text-[#00ff88]"
+                              : "border-[#2d3f5e] text-[#8899b3] hover:border-[#00d9ff]/30"
+                          }`}
+                          title={c}
+                        >
+                          {c.split("/").slice(-2).join("/")}
+                        </button>
+                      ))}
+                      {selectedProject.cwds.length > 3 && (
+                        <span className="text-[9px] text-[#8899b3]">+{selectedProject.cwds.length - 3}</span>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* CWD + Model */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              <div>
+                <label className="text-[11px] text-muted-foreground font-medium">CWD (répertoire de travail)</label>
+                <Input value={enqueueCwd} onChange={(e) => setEnqueueCwd(e.target.value)}
+                  placeholder="Ex: /home/debian/Codebase/2_ai-stack" className="h-7 text-xs mt-1 font-mono" />
+              </div>
+              <div>
+                <label className="text-[11px] text-muted-foreground font-medium">Modèle</label>
+                <select value={enqueueModel} onChange={(e) => setEnqueueModel(e.target.value)}
+                  className="h-7 text-xs w-full bg-transparent border border-border rounded-md px-2 mt-1">
+                  <option value="default">Défaut</option>
+                  <option value="claude-sonnet">Claude Sonnet</option>
+                  <option value="glm-5.1">GLM-5.1</option>
+                  <option value="gpt-4o">GPT-4o</option>
+                  <option value="deepseek">DeepSeek</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Preview + actions */}
+            <div className="bg-muted/30 border border-border rounded-md p-2 max-h-[80px] overflow-y-auto">
+              <pre className="text-[10px] text-muted-foreground whitespace-pre-wrap">{preview.slice(0, 300)}{preview.length > 300 ? "…" : ""}</pre>
+            </div>
+            <div className="flex gap-2 items-center">
+              <Button size="sm" className="text-xs h-8 bg-[#00ff88]/20 text-[#00ff88] border border-[#00ff88]/30 hover:bg-[#00ff88]/30"
+                onClick={handleEnqueue} disabled={enqueueing || !preview.trim()}>
+                {enqueueing ? "⏳ Envoi…" : `${HARNESS_OPTIONS.find(h => h.value === harnessType)?.icon || "🚀"} Enqueue → ${HARNESS_OPTIONS.find(h => h.value === harnessType)?.label || ""}`}
+              </Button>
+              <Button variant="ghost" size="sm" className="text-xs h-8" onClick={() => setShowEnqueue(false)}>
+                ✕ Annuler
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
       </DialogContent>
     </Dialog>
   );
