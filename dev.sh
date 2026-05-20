@@ -20,21 +20,22 @@ usage() {
 $(C "AxiiomLab Portal — dev.sh")
 
 $(Y "Commands:")
-  build       Build dashboard image
-  deploy      Build + restart container (zero-downtime)
-  up          Start all portal services (dashboard + homepage)
-  down        Stop all portal services
-  restart     Restart dashboard container
-  logs        Tail dashboard logs (last 50)
-  ssh         Exec shell inside dashboard container
-  status      Show container status + quick health check
-  test        Run API smoke tests
-  discover    Trigger Docker discovery
-  db          Open SQLite CLI inside container
-  db-schema   Show DB schema
-  db-stats    Show project counts + queue stats
-  clean       Remove node_modules + .next cache + rebuild
-  help        Show this help
+  build    Build dashboard image
+  deploy   Build + restart container (zero-downtime)
+  up       Start all portal services (dashboard + homepage)
+  down     Stop all portal services
+  restart  Restart dashboard container
+  logs     Tail dashboard logs (last 50)
+  ssh      Exec shell inside dashboard container
+  status   Show container status + quick health check
+  test     Run API smoke tests
+  discover Trigger Docker discovery
+  worker   Start prompt queue worker (polls & spawns harness)
+  db       Open SQLite CLI inside container
+  db-schema  Show DB schema
+  db-stats   Show project counts + queue stats
+  clean    Remove node_modules + .next cache + rebuild
+  help     Show this help
 
 $(Y "Examples:")
   ./dev.sh build
@@ -124,11 +125,11 @@ cmd_test() {
     local url="$1" expect="${2:-200}" label="$3"
     local code=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:${PORT}${url}" 2>/dev/null || echo "000")
     if [ "$code" = "$expect" ]; then
-      printf "  $(G "✓") %s → %s\n" "$label" "$code"
-      ((PASS++))
+      printf " $(G "✓") %s → %s\n" "$label" "$code"
+      PASS=$((PASS + 1))
     else
-      printf "  $(R "✗") %s → %s (expected %s)\n" "$label" "$code" "$expect"
-      ((FAIL++))
+      printf " $(R "✗") %s → %s (expected %s)\n" "$label" "$code" "$expect"
+      FAIL=$((FAIL + 1))
     fi
   }
 
@@ -233,6 +234,16 @@ cmd_clean() {
   cmd_deploy
 }
 
+cmd_worker() {
+  Y "Starting prompt queue worker..." >&2
+  local worker_script="$(dirname "$0")/prompt-worker.sh"
+  if [ ! -f "$worker_script" ]; then
+    R "✗ prompt-worker.sh not found!" >&2
+    return 1
+  fi
+  exec "$worker_script" "${@:2}"
+}
+
 # ── Main ──
 case "${1:-help}" in
   build)     cmd_build ;;
@@ -248,6 +259,7 @@ case "${1:-help}" in
   db)        cmd_db ;;
   db-schema) cmd_db_schema ;;
   db-stats)  cmd_db_stats ;;
-  clean)     cmd_clean ;;
-  help|*)    usage ;;
+  clean) cmd_clean ;;
+  worker) cmd_worker "$@" ;;
+  help|*) usage ;;
 esac
