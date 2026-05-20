@@ -20,28 +20,34 @@ usage() {
 $(C "AxiiomLab Portal — dev.sh")
 
 $(Y "Commands:")
-  build    Build dashboard image
-  deploy   Build + restart container (zero-downtime)
-  up       Start all portal services (dashboard + homepage)
-  down     Stop all portal services
-  restart  Restart dashboard container
-  logs     Tail dashboard logs (last 50)
-  ssh      Exec shell inside dashboard container
-  status   Show container status + quick health check
-  test     Run API smoke tests
-  discover Trigger Docker discovery
-  worker   Start prompt queue worker (polls & spawns harness)
-  db       Open SQLite CLI inside container
-  db-schema  Show DB schema
-  db-stats   Show project counts + queue stats
-  clean    Remove node_modules + .next cache + rebuild
-  help     Show this help
+ build Build dashboard image
+ deploy Build + restart container (zero-downtime)
+ dev-local Start next dev with hot-reload on host (port 3224)
+ setup-dev One-time setup: install deps + copy DB from container
+ up Start all portal services (dashboard + homepage)
+ down Stop all portal services
+ restart Restart dashboard container
+ logs Tail dashboard logs (last 50)
+ ssh Exec shell inside dashboard container
+ status Show container status + quick health check
+ test Run API smoke tests
+ discover Trigger Docker discovery
+ worker Start prompt queue worker (polls & spawns harness)
+ db Open SQLite CLI inside container
+ db-schema Show DB schema
+ db-stats Show project counts + queue stats
+ db-pull Copy DB from container to dashboard/data/ for local dev
+ clean Remove node_modules + .next cache + rebuild
+ help Show this help
 
 $(Y "Examples:")
-  ./dev.sh build
-  ./dev.sh logs
-  ./dev.sh test
-  ./dev.sh db-stats
+ ./dev.sh dev-local    # Start hot-reload on :3224
+ ./dev.sh setup-dev    # One-time: install deps + copy DB
+ ./dev.sh build        # Docker build
+ ./dev.sh logs         # Tail logs
+ ./dev.sh test         # Smoke tests
+ ./dev.sh db-pull      # Refresh local DB from container
+ ./dev.sh db-stats     # DB statistics
 EOF
 }
 
@@ -234,6 +240,67 @@ cmd_clean() {
   cmd_deploy
 }
 
+cmd_dev_local() {
+  local dash_dir="$(dirname "$0")/dashboard"
+  if [ ! -d "$dash_dir/node_modules" ]; then
+    Y "Installing node_modules..." >&2
+    (cd "$dash_dir" && npm ci) 2>&1 | tail -3
+  fi
+  if [ ! -f "$dash_dir/data/dashboard.db" ]; then
+    Y "No local DB found — pulling from container..." >&2
+    cmd_db_pull
+  fi
+  C "Starting next dev (hot-reload) on :3224..." >&2
+  cd "$dash_dir" && npx next dev --port 3224
+}
+
+cmd_setup_dev() {
+  local dash_dir="$(dirname "$0")/dashboard"
+  Y "Setting up local dev environment..." >&2
+  # 1. Install deps
+  if [ ! -d "$dash_dir/node_modules" ]; then
+    C " Installing npm dependencies..." >&2
+    (cd "$dash_dir" && npm ci) 2>&1 | tail -5
+  else
+    G " ✓ node_modules already installed" >&2
+  fi
+  # 2. Copy DB from container
+  if [ ! -f "$dash_dir/data/dashboard.db" ]; then
+    C " Copying DB from container..." >&2
+    mkdir -p "$dash_dir/data"
+    if docker ps --format '{{.Names}}' | grep -q "^${CONTAINER}$"; then
+      docker cp "$CONTAINER:/app/data/dashboard.db" "$dash_dir/data/dashboard.db"
+      G " ✓ DB copied" >&2
+    else
+      Y " ⚠ Container not running — creating empty DB on first dev start" >&2
+    fi
+  else
+    G " ✓ Local DB exists" >&2
+  fi
+  # 3. Create .env.local if missing
+  if [ ! -f "$dash_dir/.env.local" ]; then
+    C " Creating .env.local from .env.example..." >&2
+    cp "$dash_dir/.env.example" "$dash_dir/.env.local"
+    G " ✓ .env.local created (edit if needed)" >&2
+  else
+    G " ✓ .env.local already exists" >&2
+  fi
+  echo "" >&2
+  G "✓ Setup complete! Run: ./dev.sh dev-local" >&2
+}
+
+cmd_db_pull() {
+  local dash_dir="$(dirname "$0")/dashboard"
+  mkdir -p "$dash_dir/data"
+  if docker ps --format '{{.Names}}' | grep -q "^${CONTAINER}$"; then
+    docker cp "$CONTAINER:/app/data/dashboard.db" "$dash_dir/data/dashboard.db"
+    G "✓ DB pulled from container to dashboard/data/dashboard.db" >&2
+  else
+    R "✗ Container not running — cannot pull DB" >&2
+    return 1
+  fi
+}
+
 cmd_worker() {
   Y "Starting prompt queue worker..." >&2
   local worker_script="$(dirname "$0")/prompt-worker.sh"
@@ -246,9 +313,12 @@ cmd_worker() {
 
 # ── Main ──
 case "${1:-help}" in
-  build)     cmd_build ;;
-  deploy)    cmd_deploy ;;
-  up)        cmd_up ;;
+build) cmd_build ;;
+deploy) cmd_deploy ;;
+dev-local) cmd_dev_local ;;
+setup-dev) cmd_setup_dev ;;
+db-pull) cmd_db_pull ;;
+up) cmd_up ;;
   down)      cmd_down ;;
   restart)   cmd_restart ;;
   logs)      cmd_logs "${2:-50}" ;;
