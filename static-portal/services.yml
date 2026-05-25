@@ -1,0 +1,275 @@
+# Services AxiiomLab — Source de vérité
+# Régénère le portail via: python3 generate_portal.py --output /var/www/portal/
+
+schema_version: 1
+updated_at: "2026-05-06"
+
+categories:
+  - name: AI & Agents
+    icon: "🤖"
+    services:
+      - name: Open-WebUI
+        desc: Chat LLM (Ollama + API)
+        url: https://open-webui.dolly-tilapia.ts.net
+        aliases: [ai]
+        port: 3003
+        health: /health
+
+      - name: Ollama
+        desc: LLM inference locale
+        url: https://ollama.dolly-tilapia.ts.net
+        port: 11434
+
+      - name: LiteLLM Proxy
+        desc: Routeur LLM multi-provider
+        url: https://litellm.dolly-tilapia.ts.net
+        port: 4000
+        health: /health/liveliness
+
+      - name: LiteLLM Static
+        desc: LiteLLM config statique
+        url: https://litellm-static.dolly-tilapia.ts.net
+        port: 4001
+        health: /health/liveliness
+
+      - name: Unified Agent
+        desc: Agent IA unifié (v4)
+        url: https://unified.dolly-tilapia.ts.net
+        port: 8084
+        health: /health
+
+      - name: Agent Creator
+        desc: Créateur d'agents
+        url: https://agent-creator.dolly-tilapia.ts.net
+        aliases: [agents]
+        port: 3006
+
+      - name: Prompt Builder
+        desc: Builder de prompts
+        url: https://prompt-builder.dolly-tilapia.ts.net
+        port: 8095
+
+      - name: LangGraph
+        desc: Graphes IA (ESN)
+        url: https://langgraph.dolly-tilapia.ts.net
+        port: 8199
+
+      - name: Hyperactive Agent
+        desc: Agent v6 hyperactif
+        url: https://hyperactive.dolly-tilapia.ts.net
+        port: 9096
+
+      - name: Hermes
+        desc: Agent Hermes
+        url: https://hermes.dolly-tilapia.ts.net
+        port: 9119
+
+      - name: Agent-Zero
+        desc: Agent-Zero (testlab)
+        url: https://agent-zero.dolly-tilapia.ts.net
+        port: 8120
+
+      - name: OpenClaw
+        desc: OpenClaw gateway (testlab)
+        url: https://openclaw-gw.dolly-tilapia.ts.net
+        aliases: [openclaw]
+        port: 8100
+
+      - name: CrewAI
+        desc: CrewAI framework
+        url: https://crewai.dolly-tilapia.ts.net
+        port: 8103
+
+      - name: RAGFlow
+        desc: RAG pipeline — DO NOT TOUCH
+        url: https://ragflow.dolly-tilapia.ts.net
+        port: 8105
+
+  - name: OpenCode
+    icon: "💻"
+    services:
+      - name: OpenCode
+        desc: OpenCode natif (systemd)
+        url: https://opencode.dolly-tilapia.ts.net
+        port: 4096
+
+      - name: OpenCode Prod
+        desc: OpenCode production
+        url: https://opencode-prod.dolly-tilapia.ts.net
+        port: 4099
+
+      - name: OpenCode Ultra
+        desc: OpenCode ultra
+        url: https://opencode-ultra.dolly-tilapia.ts.net
+        port: 4097
+
+      - name: OpenCode Light
+        desc: OpenCode light
+        url: https://opencode-light.dolly-tilapia.ts.net
+        port: 4098
+
+  - name: OpenCode Staging
+    desc: OpenCode staging
+    url: https://opencode-stack.dolly-tilapia.ts.net
+    port: 4100
+
+  - name: Infra & DevOps
+    icon: "🔧"
+    services:
+    - name: Portainer
+      desc: Docker management
+      url: https://portainer.dolly-tilapia.ts.net
+      port: 9000
+
+    - name: Grafana
+      desc: Dashboards monitoring
+      url: https://grafana.dolly-tilapia.ts.net
+      port: 3030
+
+    - name: Forgejo
+      desc: Git self-hosted
+      url: https://git.dolly-tilapia.ts.net
+      aliases: [docs]
+      port: 3000
+
+    - name: Woodpecker CI
+      desc: CI/CD pipelines (Forgejo OAuth2)
+      url: https://ci.dolly-tilapia.ts.net
+      aliases: [ci]
+      port: 8010
+
+    - name: Mattermost
+      desc: Chat interne
+      url: https://mattermost.dolly-tilapia.ts.net
+      port: 8065
+
+  - name: WG-Easy
+    desc: WireGuard VPN UI
+    url: https://wg-easy.dolly-tilapia.ts.net
+    port: 51821
+
+  - name: Firefox Sync
+    desc: Firefox Sync Storage (syncstorage-rs)
+    url: https://firefox-sync.dolly-tilapia.ts.net:8100
+    port: 8100
+    health: /__heartbeat__
+
+  - name: Umami
+      desc: Analytics web
+      url: https://umami.dolly-tilapia.ts.net
+      aliases: [analytics]
+      port: 3005
+
+    - name: Cloud Dashboard
+      desc: Cloud Manager web dashboard
+      url: https://cloud-dashboard.dolly-tilapia.ts.net
+      port: 3222
+
+    - name: Registry
+      desc: Docker registry locale
+      url: http://127.0.0.1:5000
+      port: 5000
+
+  - name: VPS Fleet
+    icon: "☁️"
+    services:
+      - name: Uptime Kuma
+        desc: Monitoring status pages (oci-x86-micro-1)
+        url: https://oci-x86-micro-1.dolly-tilapia.ts.net
+        host: oci-x86-micro-1
+        port: 3001
+
+      - name: n8n
+        desc: Workflow automation (gcp-e2-small-us)
+        url: https://gcp-e2-small-us.dolly-tilapia.ts.net
+        host: gcp-e2-small-us
+        port: 5678
+
+      - name: Node Exporter (Micro)
+        desc: Metrics x86-micro-1
+        url: http://100.106.201.110:9100/metrics
+        host: oci-x86-micro-1
+        port: 9100
+
+      - name: Node Exporter (GCP)
+        desc: Metrics gcp-e2-small-us
+        url: http://100.99.34.93:9100/metrics
+        host: gcp-e2-small-us
+        port: 9100
+
+      - name: cAdvisor (AWS)
+        desc: Container metrics aws-t2-micro-us
+        url: https://aws-t2-micro-us.dolly-tilapia.ts.net
+        host: aws-t2-micro-us
+        port: 8080
+
+      - name: Node Exporter (AWS)
+        desc: Metrics aws-t2-micro-us
+        url: http://100.124.33.21:9100/metrics
+        host: aws-t2-micro-us
+        port: 9100
+
+      - name: Loki (GCP)
+        desc: Centralized logging (gcp-e2-small-us)
+        url: http://100.99.34.93:3100/ready
+        host: gcp-e2-small-us
+        port: 3100
+
+      - name: Node Exporter (Dedi)
+        desc: Metrics OVH dedi
+        url: http://100.82.220.96:9100/metrics
+        host: ovh-dedi
+        port: 9100
+
+  - name: Apps & Storage
+    icon: "📦"
+    services:
+      - name: Homepage
+        desc: Dashboard services
+        url: https://homepage.dolly-tilapia.ts.net
+        aliases: [home]
+        port: 3012
+
+      - name: Paperless
+        desc: Gestion documents
+        url: https://paperless.dolly-tilapia.ts.net
+        port: 8011
+
+      - name: Immich
+        desc: Gestion photos
+        url: https://photo.dolly-tilapia.ts.net
+        port: 2283
+
+      - name: Stirling-PDF
+        desc: Outils PDF
+        url: https://pdf.dolly-tilapia.ts.net
+        port: 8010
+
+      - name: ArchiveBox
+        desc: Archive web
+        url: https://archive.dolly-tilapia.ts.net
+        port: 8002
+
+      - name: pgAdmin
+        desc: Admin PostgreSQL
+        url: https://pgadmin.dolly-tilapia.ts.net
+        port: 5050
+
+  - name: Public
+    icon: "🌐"
+    services:
+      - name: Portal
+        desc: Portail des services
+        url: https://portal.axiiomlab.ovh
+        ts_url: https://portal.dolly-tilapia.ts.net
+        deploy_path: /var/www/portal
+
+      - name: MCP Server
+        desc: AxiiomLab MCP HTTP
+        url: https://mcp.axiiomlab.ovh/mcp
+        health: https://mcp.axiiomlab.ovh/healthz
+
+tailscale:
+  tailnet: axiiom.home@gmail.com
+  base_domain: dolly-tilapia.ts.net
+  serve_config: ../25_Tailscale-Services/tailscale-serve-restore/serve-config-backup.json

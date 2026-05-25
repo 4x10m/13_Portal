@@ -1,0 +1,150 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-sans);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+  /* AxiiomLab custom colors (Portal vivid) */
+  --color-ax-blue: #00d9ff;
+  --color-ax-green: #00ff88;
+  --color-ax-yellow: #ffbe0b;
+  --color-ax-red: #ff4757;
+  --color-ax-bg: #16213e;
+  --color-ax-surface: #1a2744;
+}
+
+/* ── AxiiomLab vivid dark theme (Portal-inspired) ── */
+:root {
+--background: #16213e;
+--foreground: #e0e8f0;
+--card: #1a2744;
+--card-foreground: #e0e8f0;
+--popover: #1a2744;
+--popover-foreground: #e0e8f0;
+--primary: #00d9ff;
+--primary-foreground: #0a0f1a;
+--secondary: #243352;
+--secondary-foreground: #e0e8f0;
+--muted: #1a2744;
+--muted-foreground: #8899b3;
+--accent: #243352;
+--accent-foreground: #e0e8f0;
+--destructive: #ff4757;
+--border: #2d3f5e;
+--input: #243352;
+--ring: #00d9ff;
+--chart-1: #00d9ff;
+--chart-2: #00ff88;
+--chart-3: #ffbe0b;
+--chart-4: #ff4757;
+--chart-5: #8899b3;
+--radius: 0.625rem;
+--sidebar: #16213e;
+--sidebar-foreground: #e0e8f0;
+--sidebar-primary: #00d9ff;
+--sidebar-primary-foreground: #0a0f1a;
+--sidebar-accent: #1a2744;
+--sidebar-accent-foreground: #e0e8f0;
+--sidebar-border: #243352;
+--sidebar-ring: #00d9ff;
+}
+
+.dark {
+--background: #16213e;
+--foreground: #e0e8f0;
+--card: #1a2744;
+--card-foreground: #e0e8f0;
+--popover: #1a2744;
+--popover-foreground: #e0e8f0;
+--primary: #00d9ff;
+--primary-foreground: #0a0f1a;
+--secondary: #243352;
+--secondary-foreground: #e0e8f0;
+--muted: #1a2744;
+--muted-foreground: #8899b3;
+--accent: #243352;
+--accent-foreground: #e0e8f0;
+--destructive: #ff4757;
+--border: #2d3f5e;
+--input: #243352;
+--ring: #00d9ff;
+--chart-1: #00d9ff;
+--chart-2: #00ff88;
+--chart-3: #ffbe0b;
+--chart-4: #ff4757;
+--chart-5: #8899b3;
+--sidebar: #16213e;
+--sidebar-foreground: #e0e8f0;
+--sidebar-primary: #00d9ff;
+--sidebar-primary-foreground: #0a0f1a;
+--sidebar-accent: #1a2744;
+--sidebar-accent-foreground: #e0e8f0;
+--sidebar-border: #243352;
+--sidebar-ring: #00d9ff;
+}
+
+@layer base {
+  * {
+  @apply border-border outline-ring/50;
+  }
+  body {
+  @apply bg-background text-foreground;
+  }
+  html {
+  @apply font-sans;
+  }
+}
+
+/* ── Card animation on filter/sort changes ── */
+@layer utilities {
+  .card-enter {
+    animation: cardFadeIn 0.25s ease-out both;
+  }
+}
+
+@keyframes cardFadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}

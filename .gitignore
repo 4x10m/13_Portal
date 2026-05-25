@@ -1,0 +1,34 @@
+# Env & secrets
+.env
+*.key
+*.pem
+*.crt
+
+# Node
+node_modules/
+.next/
+
+# Local dev data (copied from container)
+dashboard/data/
+
+# Docker
+volumes/
+logs/
+
+# Python
+__pycache__/
+
+# IDE
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+
+# Build artifacts
+dashboard/tsconfig.tsbuildinfo
+
+# Session experiments (not part of dashboard)
+session-cli/
+session-dashboard/
+session-manager-tui/

@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AxiiomLab - Portail des services</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      color: #e0e0e0;
+      min-height: 100vh;
+      padding: 2rem;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+    .header h1 {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(90deg, #00d9ff, #00ff88);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .header p { color: #888; font-size: 0.9rem; }
+    .category {
+      margin-bottom: 2.5rem;
+    }
+    .category h2 {
+      font-size: 1.4rem;
+      margin-bottom: 1rem;
+      color: #00d9ff;
+      border-bottom: 1px solid #2a2a4a;
+      padding-bottom: 0.5rem;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 1rem;
+    }
+    .card {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
+      padding: 1.2rem;
+      text-decoration: none;
+      color: #e0e0e0;
+      transition: all 0.2s ease;
+    }
+    .card:hover {
+      background: rgba(255,255,255,0.1);
+      border-color: #00d9ff;
+      transform: translateY(-2px);
+    }
+    .card .name {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 0.3rem;
+    }
+    .card .desc {
+      font-size: 0.85rem;
+      color: #aaa;
+    }
+    .card .port {
+      font-size: 0.75rem;
+      color: #555;
+      margin-top: 0.5rem;
+    }
+    .footer {
+      text-align: center;
+      margin-top: 3rem;
+      color: #555;
+      font-size: 0.8rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>AxiiomLab</h1>
+    <p>Portail des services — généré le 2026-05-08 10:29</p>
+  </div>
+
+  <div class="category">
+    <h2>🤖 AI & Agents</h2>
+    <div class="grid">
+    <a class="card" href="https://open-webui.dolly-tilapia.ts.net" target="_blank">
+      <div class="name">🤖 Open-WebUI</div>
+      <div class="desc">Chat LLM (Ollama + API)</div>
+      <div class="port">:3003</div>
+    </a>
+
+    <a class="card" href="https://ollama.dolly-tilapia.ts.net" target="_blank">
+      <div class="name">🤖 Ollama</div>
+      <div class="desc">LLM inference locale</div>
+      <div class="port">:11434</div>
+    </a>
+
+    <a class="card" href="https://litellm.dolly-tilapia.ts.net" target="_blank">
+      <div class="name">🤖 LiteLLM Proxy</div>
+      <div class="desc">Routeur LLM multi-provider</div>
+      <div class="port">:4000</div>
+    </a>
+
+    <a class="card" href="https://litellm-static.dolly-tilapia.ts.net" target="_blank">
+      <div class="name">🤖 LiteLLM Static</div>
+      <div class="desc">LiteLLM config statique</div>
+      <div class="port">:4001</div>
+    </a>
+
+    <a class="card" href="https://unified.dolly-tilapia.ts.net" target="_blank">
+      <div class="name">🤖 Unified Agent</div>
+      <div class="desc">Agent IA unifié (v4)</div>
+      <div class="port">:8084</div>
+    </a>
+
+    <a class="card" href="https://agent-creator.dolly-tilapia.ts.net" target="_blank">
+      <div class="name">🤖 Agent Creator</div>
+      <div class="desc">Créateur d'agents</div>
+      <div class="port">:3006</div>
+    </a>
+
+    <a class="card" href="https://prompt-builder.dolly-tilapia.ts.net" target="_blank">
+      <div class="name">🤖 Prompt Builder</div>
+      <div class="desc">Builder de prompts</div>
+      <div class="port">:8095</div>
+    </a>
+
+    <a class="card" href="https://langgraph.dolly-tilapia.ts.net" target="_blank">
+      <div class="name">🤖 LangGraph</div>
+      <div class="desc">Graphes IA (ESN)</div>
+      <div class="port">:8199</div>
+    </a>
+
+    <a class="card" href="https://hyperactive.dolly-tilapia.ts.net" target="_blank">
+      <div class="name">🤖 Hyperactive Agent</div>
+      <div class="desc">Agent v6 hyperactif</div>
+      <div class="port">:9096</div>
+    </a>
+
+    <a class="card" href="https://hermes.dolly-tilapia.ts.net" target="_blank">
+      <div class="name">🤖 Hermes</div>
+      <div class="desc">Agent Hermes</div>
+      <div class="port">:9119</div>
+    </a>
+
+    <a class="card" href="https://agent-zero.dolly-tilapia.ts.net" target="_blank">
+      <div class="name">🤖 Agent-Zero</div>
+      <div class="desc">Agent-Zero (testlab)</div>
+      <div class="port">:8120</div>
+    </a>
+
+    <a class="card" href="https://openclaw-gw.dolly-tilapia.ts.net" target="_blank">
+      <div class="name">🤖 OpenClaw</div>
+      <div class="desc">OpenClaw gateway (testlab)</div>
+      <div class="port">:8100</div>
+    </a>
+
+    <a class="card" href="https://crewai.dolly-tilapia.ts.net" target="_blank">
+      <div class="name">🤖 CrewAI</div>
+      <div class="desc">CrewAI framework</div>
+      <div class="port">:8103</div>
+    </a>
+
+    <a class="card" href="https://ragflow.dolly-tilapia.ts.net" target="_blank">
+      <div class="name">🤖 RAGFlow</div>
+      <div class="desc">RAG pipeline — DO NOT TOUCH</div>
+      <div class="port">:8105</div>
+    </a>
+
+    </div>
+  </div>
+  <div class="category">
+    <h2>💻 OpenCode</h2>
+    <div class="grid">
+    <a class="card" href="https://opencode.dolly-tilapia.ts.net" target="_blank">
+      <div class="name">💻 OpenCode</div>
+      <div class="desc">OpenCode natif (systemd)</div>
+      <div class="port">:4096</div>
+    </a>
+
+    <a class="card" href="https://opencode-prod.dolly-tilapia.ts.net" target="_blank">
+      <div class="name">💻 OpenCode Prod</div>
+      <div class="desc">OpenCode production</div>
+      <div class="port">:4099</div>
+    </a>
+
+    <a class="card" href="https://opencode-ultra.dolly-tilapia.ts.net" target="_blank">
+      <div class="name">💻 OpenCode Ultra</div>
+      <div class="desc">OpenCode ultra</div>
+      <div class="port">:4097</div>
+    </a>
+
+    <a class="card" href="https://opencode-light.dolly-tilapia.ts.net" target="_blank">
+      <div class="name">💻 OpenCode Light</div>
+      <div class="desc">OpenCode light</div>
+      <div class="port">:4098</div>
+    </a>
+
+    <a class="card" href="https://opencode-stack.dolly-tilapia.ts.net" target="_blank">
+      <div class="name">💻 OpenCode Staging</div>
+      <div class="desc">OpenCode staging</div>
+      <div class="port">:4100</div>
+    </a>
+
+    </div>
+  </div>
+  <div class="category">
+    <h2>🔧 Infra & DevOps</h2>
+    <div class="grid">
+    <a class="card" href="https://portainer.dolly-tilapia.ts.net" target="_blank">
+      <div class="name">🔧 Portainer</div>
+      <div class="desc">Docker management</div>
+      <div class="port">:9000</div>
+    </a>
+
+    <a class="card" href="https://grafana.dolly-tilapia.ts.net" target="_blank">
+      <div class="name">🔧 Grafana</div>
+      <div class="desc">Dashboards monitoring</div>
+      <div class="port">:3030</div>
+    </a>
+
+    <a class="card" href="https://git.dolly-tilapia.ts.net" target="_blank">
+      <div class="name">🔧 Forgejo</div>
+      <div class="desc">Git self-hosted</div>
+      <div class="port">:3000</div>
+    </a>
+
+    <a class="card" href="https://ci.dolly-tilapia.ts.net" target="_blank">
+      <div class="name">🔧 Woodpecker CI</div>
+      <div class="desc">CI/CD pipelines (Forgejo OAuth2)</div>
+      <div class="port">:8010</div>
+    </a>
+
+    <a class="card" href="https://mattermost.dolly-tilapia.ts.net" target="_blank">
+      <div class="name">🔧 Mattermost</div>
+      <div class="desc">Chat interne</div>
+      <div class="port">:8065</div>
+    </a>
+
+    <a class="card" href="https://wg-easy.dolly-tilapia.ts.net" target="_blank">
+      <div class="name">🔧 WG-Easy</div>
+      <div class="desc">WireGuard VPN UI</div>
+      <div class="port">:51821</div>
+    </a>
+
+    <a class="card" href="https://umami.dolly-tilapia.ts.net" target="_blank">
+      <div class="name">🔧 Umami</div>
+      <div class="desc">Analytics web</div>
+      <div class="port">:3005</div>
+    </a>
+
+    <a class="card" href="https://cloud-dashboard.dolly-tilapia.ts.net" target="_blank">
+      <div class="name">🔧 Cloud Dashboard</div>
+      <div class="desc">Cloud Manager web dashboard</div>
+      <div class="port">:3222</div>
+    </a>
+
+    <a class="card" href="http://127.0.0.1:5000" target="_blank">
+      <div class="name">🔧 Registry</div>
+      <div class="desc">Docker registry locale</div>
+      <div class="port">:5000</div>
+    </a>
+
+    </div>
+  </div>
+  <div class="category">
+    <h2>☁️ VPS Fleet</h2>
+    <div class="grid">
+    <a class="card" href="https://oci-x86-micro-1.dolly-tilapia.ts.net" target="_blank">
+      <div class="name">☁️ Uptime Kuma</div>
+      <div class="desc">Monitoring status pages (oci-x86-micro-1)</div>
+      <div class="port">:3001</div>
+    </a>
+
+    <a class="card" href="https://gcp-e2-small-us.dolly-tilapia.ts.net" target="_blank">
+      <div class="name">☁️ n8n</div>
+      <div class="desc">Workflow automation (gcp-e2-small-us)</div>
+      <div class="port">:5678</div>
+    </a>
+
+    <a class="card" href="http://100.106.201.110:9100/metrics" target="_blank">
+      <div class="name">☁️ Node Exporter (Micro)</div>
+      <div class="desc">Metrics x86-micro-1</div>
+      <div class="port">:9100</div>
+    </a>
+
+    <a class="card" href="http://100.99.34.93:9100/metrics" target="_blank">
+      <div class="name">☁️ Node Exporter (GCP)</div>
+      <div class="desc">Metrics gcp-e2-small-us</div>
+      <div class="port">:9100</div>
+    </a>
+
+    <a class="card" href="https://aws-t2-micro-us.dolly-tilapia.ts.net" target="_blank">
+      <div class="name">☁️ cAdvisor (AWS)</div>
+      <div class="desc">Container metrics aws-t2-micro-us</div>
+      <div class="port">:8080</div>
+    </a>
+
+    <a class="card" href="http://100.124.33.21:9100/metrics" target="_blank">
+      <div class="name">☁️ Node Exporter (AWS)</div>
+      <div class="desc">Metrics aws-t2-micro-us</div>
+      <div class="port">:9100</div>
+    </a>
+
+    <a class="card" href="http://100.99.34.93:3100/ready" target="_blank">
+      <div class="name">☁️ Loki (GCP)</div>
+      <div class="desc">Centralized logging (gcp-e2-small-us)</div>
+      <div class="port">:3100</div>
+    </a>
+
+    <a class="card" href="http://100.82.220.96:9100/metrics" target="_blank">
+      <div class="name">☁️ Node Exporter (Dedi)</div>
+      <div class="desc">Metrics OVH dedi</div>
+      <div class="port">:9100</div>
+    </a>
+
+    </div>
+  </div>
+  <div class="category">
+    <h2>📦 Apps & Storage</h2>
+    <div class="grid">
+    <a class="card" href="https://homepage.dolly-tilapia.ts.net" target="_blank">
+      <div class="name">📦 Homepage</div>
+      <div class="desc">Dashboard services</div>
+      <div class="port">:3012</div>
+    </a>
+
+    <a class="card" href="https://paperless.dolly-tilapia.ts.net" target="_blank">
+      <div class="name">📦 Paperless</div>
+      <div class="desc">Gestion documents</div>
+      <div class="port">:8011</div>
+    </a>
+
+    <a class="card" href="https://photo.dolly-tilapia.ts.net" target="_blank">
+      <div class="name">📦 Immich</div>
+      <div class="desc">Gestion photos</div>
+      <div class="port">:2283</div>
+    </a>
+
+    <a class="card" href="https://pdf.dolly-tilapia.ts.net" target="_blank">
+      <div class="name">📦 Stirling-PDF</div>
+      <div class="desc">Outils PDF</div>
+      <div class="port">:8010</div>
+    </a>
+
+    <a class="card" href="https://archive.dolly-tilapia.ts.net" target="_blank">
+      <div class="name">📦 ArchiveBox</div>
+      <div class="desc">Archive web</div>
+      <div class="port">:8002</div>
+    </a>
+
+    <a class="card" href="https://pgadmin.dolly-tilapia.ts.net" target="_blank">
+      <div class="name">📦 pgAdmin</div>
+      <div class="desc">Admin PostgreSQL</div>
+      <div class="port">:5050</div>
+    </a>
+
+    </div>
+  </div>
+  <div class="category">
+    <h2>🌐 Public</h2>
+    <div class="grid">
+    <a class="card" href="https://portal.axiiomlab.ovh" target="_blank">
+      <div class="name">🌐 Portal</div>
+      <div class="desc">Portail des services</div>
+      
+    </a>
+
+    <a class="card" href="https://mcp.axiiomlab.ovh/mcp" target="_blank">
+      <div class="name">🌐 MCP Server</div>
+      <div class="desc">AxiiomLab MCP HTTP</div>
+      
+    </a>
+
+    </div>
+  </div>
+  <div class="footer">
+    <p>44 services — AxiiomLab</p>
+  </div>
+</body>
+</html>
