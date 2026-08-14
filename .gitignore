@@ -1,8 +1,21 @@
 # Env & secrets
 .env
+.env.*
+!.env.example
 *.key
 *.pem
 *.crt
+
+# runtime / generated (modèle CD axiiomlab)
+.runtime/
+data/
+*.log
+
+# secrets réels (jamais commités — templates dans secrets.example/)
+secrets/
+
+# runtime env local
+runtime.env
 
 # Node
 node_modules/

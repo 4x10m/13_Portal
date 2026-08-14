@@ -7,7 +7,9 @@ cd "$(dirname "$0")"
 
 PORT=3223
 CONTAINER=axiiomlab-dashboard
-COMPOSE="docker compose"
+ROOT="$(cd "$(dirname "$0")" && pwd)"
+export DATA_ROOT="${DATA_ROOT:-$ROOT/dashboard/data}"
+COMPOSE="docker compose -f stacks/portal/docker-compose.yml"
 
 # ── Colors ──
 G() { printf '\033[32m%s\033[0m' "$*"; }
@@ -24,7 +26,7 @@ $(Y "Commands:")
  deploy Build + restart container (zero-downtime)
  dev-local Start next dev with hot-reload on host (port 3224)
  setup-dev One-time setup: install deps + copy DB from container
- up Start all portal services (dashboard + homepage)
+ up Start the dashboard container
  down Stop all portal services
  restart Restart dashboard container
  logs Tail dashboard logs (last 50)
@@ -75,7 +77,6 @@ cmd_up() {
   $COMPOSE up -d 2>&1 | tail -10
   G "✓ Services started" >&2
 }
-
 cmd_down() {
   $COMPOSE down 2>&1 | tail -5
   G "✓ Services stopped" >&2

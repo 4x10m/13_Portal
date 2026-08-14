@@ -1,0 +1,47 @@
+name: Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      stacks:
+        description: "Stacks a deployer (vides = toutes). Ex: portal"
+        required: false
+        default: ""
+      confirm:
+        description: "Taper OUI pour confirmer le deploiement (la stack live reste intacte tant que ce n'est pas confirme)"
+        required: true
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Deploy via SSH (debian@51.68.39.122)
+    runs-on: ubuntu-latest
+    if: github.event.inputs.confirm == 'OUI'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Preparer la cle SSH
+        run: |
+          mkdir -p ~/.ssh
+          umask 077
+          echo "${{ secrets.SSH_DEPLOY_KEY }}" > ~/.ssh/id_ci
+          chmod 600 ~/.ssh/id_ci
+          ssh-keyscan -H 51.68.39.122 >> ~/.ssh/known_hosts 2>/dev/null
+      - name: Purger les credentials du checkout
+        run: |
+          git config --unset-all http.https://github.com/.extraheader || true
+          find .git -name config -exec sed -i '/extraheader/d' {} \; || true
+      - name: Sync repo vers le serveur
+        run: |
+          rsync -az --delete --exclude='.git' \
+            --exclude='.runtime' --exclude='data' --exclude='runtime.env' \
+            --exclude='secrets' --exclude='dashboard/node_modules' \
+            --exclude='dashboard/.next' --exclude='dashboard/data' \
+            -e "ssh -i ~/.ssh/id_ci -o StrictHostKeyChecking=no" \
+            ./ debian@51.68.39.122:/opt/portal/
+      - name: Render + deploy sur le serveur
+        run: |
+          ssh -i ~/.ssh/id_ci -o StrictHostKeyChecking=no debian@51.68.39.122 \
+            'cd /opt/portal && bash bin/render.sh && bash bin/deploy.sh ${{ github.event.inputs.stacks }}'

@@ -1,0 +1,6 @@
+# Portal stack — aucun secret-fichier requis.
+#
+# La stack porte un seul env (stack.env), généré depuis
+# stacks/portal/stack.env.example → secrets/portal/stack.env (gitignoré) par
+# server/setup.sh ou à la main. Les clés vides = valeurs par défaut du dashboard.
+# Rien à déposer ici.
